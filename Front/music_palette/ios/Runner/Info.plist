@@ -22,6 +22,19 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <!-- facebook login -->
+        <string>fbAPP-ID</string>
+
+        <!-- google login -->
+        <string>com.googleusercontent.apps.561761025884-3s9u52tgrlbamjpgiml2q5l0h7g2v9kv</string>
+      </array>
+      </dict>
+    </array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

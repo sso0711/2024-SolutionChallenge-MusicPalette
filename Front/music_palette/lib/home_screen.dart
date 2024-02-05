@@ -1,26 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:music_palette/login_service.dart';
 import 'package:music_palette/music_data.dart';
 import 'package:music_palette/musicpage.dart';
 import 'package:music_palette/mypage.dart';
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   List<MyMusic> testdata = [
-    MyMusic(name: "bad guy", singer: "singer1"),
-    MyMusic(name: "Blueming", singer: "singer2"),
-    MyMusic(name: "05 Bad Liar", singer: "singer3"),
-    MyMusic(name: "LOVE ME RIGHT", singer: "singer4"),
-    MyMusic(name: "Don't Call Me", singer: "singer5"),
-    MyMusic(name: "hey", singer: "singer6"),
-    MyMusic(name: "Blueming", singer: "singer7"),
-    MyMusic(name: "onrepeat", singer: "singer8"),
-    MyMusic(name: "hey", singer: "singer9"),
-    MyMusic(name: "dreams", singer: "singer10"),
+    MyMusic(
+        id: 1,
+        title: "05 Bad Liar",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 2,
+        title: "bad guy",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 3,
+        title: "Blueming",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 4,
+        title: "Don't Call Me",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 5,
+        title: "dreams",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 6, title: "hey", encodedtitle: "encoded_title", artist: "artist"),
+    MyMusic(
+        id: 7,
+        title: "LOVE ME RIGHT",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 8,
+        title: "onrepeat",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 9,
+        title: "Blueming",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 10,
+        title: "Blueming",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 11,
+        title: "Blueming",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 12,
+        title: "Blueming",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
+    MyMusic(
+        id: 13,
+        title: "Blueming",
+        encodedtitle: "encoded_title",
+        artist: "artist"),
   ];
 
-  //Future<List<Testapi>> musics = ApiService.getMusics();
+  MusicUser user = MusicUser();
+  //LoginService user = LoginService();
 
+  //Future<List<Testapi>> musics = ApiService.getMusics();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,64 +90,28 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: ListView(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  height: 200,
-                  color: Colors.black45,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              fullscreenDialog: true,
-                              builder: (BuildContext context) {
-                                return const Mypage();
-                              },
-                            ),
-                          );
+              user.isLogin
+                  ? profile(context)
+                  : Container(
+                      padding: const EdgeInsets.all(20),
+                      height: 100,
+                      color: Colors.black45,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await user.signInWithGoogle();
+                          setState(() {});
                         },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            height: 90,
-                            width: 90,
-                            color: Colors.amber,
-                          ),
+                        icon: const Icon(
+                          Icons.login_outlined,
+                          size: 18,
+                          color: Colors.white60,
+                        ),
+                        label: const Text(
+                          "로그인이 필요합니다.",
+                          style: TextStyle(color: Colors.white60),
                         ),
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "정우서",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                              ),
-                            ),
-                            Text(
-                              "dddd@gmail.com",
-                              style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 15,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
               const SizedBox(
                 height: 10,
               ),
@@ -101,7 +125,9 @@ class HomeScreen extends StatelessWidget {
                         MaterialPageRoute(
                           fullscreenDialog: true,
                           builder: (BuildContext context) {
-                            return const Mypage();
+                            return Mypage(
+                              user: user,
+                            );
                           },
                         ),
                       );
@@ -182,6 +208,69 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  ClipRRect profile(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        height: 200,
+        color: Colors.black45,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (BuildContext context) {
+                      return Mypage(
+                        user: user,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: SizedBox(
+                  height: 90,
+                  width: 90,
+                  child: Image.network(user.userImage),
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.userName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
+                  Text(
+                    user.userEmail,
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 15,
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class Music extends StatelessWidget {
@@ -201,8 +290,8 @@ class Music extends StatelessWidget {
             fullscreenDialog: true,
             builder: (BuildContext context) {
               return MusicPage(
-                name: music.name,
-                singer: music.singer,
+                name: music.title,
+                singer: music.artist,
               );
             },
           ),
@@ -227,7 +316,7 @@ class Music extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  music.name,
+                  music.title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -235,7 +324,7 @@ class Music extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  music.singer,
+                  music.artist,
                   style: const TextStyle(
                     fontSize: 15,
                     color: Colors.white60,

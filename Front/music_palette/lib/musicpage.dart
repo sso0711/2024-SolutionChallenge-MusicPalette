@@ -128,7 +128,7 @@ class _MusicPageState extends State<MusicPage> {
             //print('test');
           } else if (testvive[nowvive][1] > 0.25) {
             Vibration.vibrate(amplitude: 50);
-          } else if (testvive[nowvive][1] > 0) {
+          } else if (testvive[nowvive][1] > 0.1) {
             Vibration.vibrate(amplitude: 10);
           }
           nowvive = nowvive + 1;
@@ -2297,9 +2297,14 @@ class _MusicPageState extends State<MusicPage> {
       ['193.49', '0.15']
     ];
     List returnvive = [];
-    for (var mun in stringvive3) {
+    //var tempsec = int.parse(stringvive4[0][3].split(".")[0]);
+    //var tempmili =
+    //(int.parse(stringvive4[0][3].split(".")[1])) * 10 + (tempsec * 1000);
+    //stringvive4.removeRange(0, 4);
+
+    for (var mun in stringvive4) {
       var sec = int.parse(mun[0].split(".")[0]);
-      var mili = (int.parse(mun[0].split(".")[1])) * 10 + (sec * 1000) - 10;
+      var mili = (int.parse(mun[0].split(".")[1])) * 10 + (sec * 1000);
 
       //print("sec : $sec, mili : $mili");
       var viv = double.parse(mun[1]);
@@ -2308,7 +2313,7 @@ class _MusicPageState extends State<MusicPage> {
 
       returnvive.add([dur, viv]);
     }
-    //print(returnvive);
+
     return returnvive;
   }
 }
