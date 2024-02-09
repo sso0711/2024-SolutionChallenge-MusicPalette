@@ -38,6 +38,6 @@ module.exports = function(app){
      app.post('/user/like/:music_id', user.postUserLike);
 
      // 8. delete user like API
-    //  app.delete('/user/like/:music_id', user.deleteUserLike);
+     app.delete('/user/like/:music_id', user.deleteUserLike);
 
 };

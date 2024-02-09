@@ -112,11 +112,29 @@ async function postUserLike(db, userId, musicId){
     }
 }
 
+async function deleteUserLike(db, userId, musicId){
+    const ref = db.ref('Users/' + userId);
+    const data = (await ref.once('value')).val();
+
+    const likes = JSON.parse(data.likes);
+
+    if(likes[musicId]){
+        likes[musicId] = false;
+        await ref.set({
+            "likes": JSON.stringify(likes)
+        });
+    }
+    return {
+        "likes": JSON.stringify(likes)
+    }
+}
+
 module.exports ={
     postInitializeMade,
     postInitializeStore,
     getMusicList,
     getMusicInfo,
     getUserLikes,
-    postUserLike
+    postUserLike,
+    deleteUserLike
 };

@@ -156,3 +156,19 @@ async function validateFirebaseIdToken(idToken){
     const userLikes = await userService.postUserLike(userId, musicId);
     return res.send(userLikes);
  }
+
+ /**
+  * API No. 8
+  * API Name : Delete user like API
+  * [POST] /user/like/:music_id
+  */
+ exports.deleteUserLike = async function(req, res){
+    const idToken = req.header('Authorization');
+    // idToken 유효 확인
+    const userId = await validateFirebaseIdToken(idToken);
+
+    const musicId = req.params.music_id;
+
+    const userLikes = await userService.deleteUserLike(userId, musicId);
+    return res.send(userLikes);
+ }

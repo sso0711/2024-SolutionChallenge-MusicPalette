@@ -200,6 +200,17 @@ exports.postUserLike = async function(userId, musicId){
   }
 }
 
+exports.deleteUserLike = async function(userId, musicId){
+  try{
+    const db = admin.database();
+    const userLikes = await userDao.deleteUserLike(db, userId, musicId);
+    return userLikes;
+  }catch(error){
+    logger.error(`App - userService deleteUserLike error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
+}
+
 
 // const mm = require('music-metadata');
 // const path = require('path');
