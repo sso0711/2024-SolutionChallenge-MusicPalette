@@ -12,8 +12,6 @@ const admin = require("firebase-admin");
 const serviceAccount = require("../../../config/music-palette-firebase-adminsdk-4u2ui-4db9a9b2ff.json");
 const databaseURL = require("../../../config/database").getDatabaseURL();
 
-console.log(databaseURL);
-
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: databaseURL
@@ -59,8 +57,19 @@ process.on('exit', cleanupAndExit);
  /**
   * API No. 3
   * API Name : Initialize - Store Music info API
+  * [POST] /initialize-store
   */
  exports.postInitializeStore = async function(req, res){
     const responseStore = await userService.postInitializeStore();
     return res.send(responseStore);
+ }
+
+ /**
+  * API No. 4
+  * API Name : Get musics list API
+  * [GET] /musics
+  */
+ exports.getMusicList = async function(req, res){
+    const musicList = await userProvider.getMusicList();
+    return res.send(musicList);
  }

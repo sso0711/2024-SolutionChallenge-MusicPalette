@@ -1,6 +1,7 @@
 const { response } = require("express");
 const baseResponseStatus = require("../../../config/baseResponseStatus");
 
+// set musicId increase by 1
 async function increaseMusicId(db){
     let musicId = 0;
     const result = await db.ref('last_music_id').transaction((currentCounter) => {
@@ -33,6 +34,27 @@ async function postInitializeStore(db, postInitializeStoreParams){
 
 }
 
+async function getMusicList(db){
+    const musicNum = (await db.ref('last_music_id').once('value')).val();
+    console.log(musicNum);
+    const musicList = [];
+
+    for(let i = 1; i<= musicNum; i++){
+        const snapshot = await db.ref('Musics/'+ (i + '')).once('value');
+        const data = snapshot.val();
+
+        musicList.push({
+            "song_id": i,
+            "title": data.title,
+            "encoded_title": data.encoded_title,
+            "artist": data.artist
+        });
+    }
+    
+    return JSON.stringify(musicList, null, 4);
+}
+
 module.exports ={
-    postInitializeStore
+    postInitializeStore,
+    getMusicList
 };

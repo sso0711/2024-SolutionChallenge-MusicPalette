@@ -25,4 +25,7 @@ module.exports = function(app){
      // 3. initialize - store musics info in db API 
      app.post('/initialize-store', user.postInitializeStore);
 
+     // 4. get all musics list API
+     app.get('/musics', user.getMusicList);
+
 };
