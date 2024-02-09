@@ -75,9 +75,24 @@ async function getMusicInfo(db, musicId){
     return JSON.stringify(musicInfo, null, 2);
 }
 
+async function getUserLikes(db, userId){
+    const ref = db.ref('Users/'+ userId);
+    const data = (await ref.once('value')).val();
+    
+    if(data == null){
+        const musicNum = (await db.ref('last_music_id').once('value')).val();
+        data = new Array(musicNum).fill(false);
+        await ref.set({
+            "likes": JSON.stringify(data)
+        });
+    }
+    return data;
+}
+
 module.exports ={
     postInitializeMade,
     postInitializeStore,
     getMusicList,
-    getMusicInfo
+    getMusicInfo,
+    getUserLikes
 };

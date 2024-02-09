@@ -28,3 +28,15 @@ exports.getMusicInfo = async function(musicId){
         return errResponse(baseResponse.DB_ERROR);
     }
 }
+
+exports.getUserLikes = async function(userId){
+    try{
+        const db = admin.database();
+        const userLikes = await userDao.getUserLikes(db, userId);
+    
+        return userLikes;
+    }catch(error){
+        logger.error(`App - userProvider getUserLikes error\n: ${error.message}`);
+        return errResponse(baseResponse.DB_ERROR);
+    }
+}

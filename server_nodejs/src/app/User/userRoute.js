@@ -31,4 +31,13 @@ module.exports = function(app){
      // 5. get a music info API
      app.get('/musics/:music_id', user.getMusicInfo);
 
+     // 6. get user likes API
+     app.get('/user/like', user.getUserLikes);
+
+     // 7. add user like API
+    //  app.post('/user/like/:music_id', user.postUserLike);
+
+     // 8. delete user like API
+    //  app.delete('/user/like/:music_id', user.deleteUserLike);
+
 };

@@ -1,3 +1,4 @@
+const {logger} = require("../../../config/winston");
 const jwtMiddleware = require("../../../config/jwtMiddleware");
 const userProvider = require("../../app/User/userProvider");
 const userService = require("../../app/User/userService");
@@ -37,6 +38,20 @@ function cleanupAndExit() {
 }
 process.on('SIGINT', cleanupAndExit);
 process.on('exit', cleanupAndExit);
+
+async function validateFirebaseIdToken(idToken){
+  try {
+    const userRecord = await admin.auth().getUser(idToken);
+    // 해당 UID의 사용자 정보를 가져옴
+    console.log('Valid UID:', userRecord.uid);
+    return userRecord.uid; 
+
+  } catch (error) {
+    // UID가 Firebase에 존재하지 않거나 검증에 실패한 경우 처리
+    console.error('Invalid UID:', error);
+    throw error; // 에러를 다시 throw하여 호출자에게 전파할 수 있음
+  }
+}
 
 /**
  * API No. 0
@@ -105,3 +120,25 @@ process.on('exit', cleanupAndExit);
   const musicInfo = await userProvider.getMusicInfo(musicId);
   return res.send(musicInfo);
  };
+
+ /**
+  * API No. 6
+  * API Name : Get user likes API
+  * [GET] /user/like
+  */
+ exports.getUserLikes = async function(req, res){
+  try{
+    const idToken = req.header('Authorization');
+    console.log(idToken);
+    // idToken 유효 확인
+    const userId = await validateFirebaseIdToken(idToken);
+    console.log(userId);
+
+    const userLikes = await userProvider.getUserLikes(userId);
+    return res.send(userLikes);
+
+  }catch(error){
+    logger.error(`App - userController getUserLikes error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
+ }
