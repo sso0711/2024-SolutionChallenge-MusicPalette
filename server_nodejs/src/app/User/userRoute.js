@@ -17,7 +17,7 @@ module.exports = function(app){
      app.use('/musics/mp3-file', express.static('./assets/musics'));
 
     //  // 1. initialize - lrc & coverimages API
-    //  app.post('/initialize-parse', );
+     app.post('/initialize-parse', user.postInitializeParse);
 
     //  // 2. initialize - get madeimages from ML Server API
     //  app.post('/initialize-made', );

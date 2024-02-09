@@ -55,6 +55,16 @@ process.on('exit', cleanupAndExit);
  };
 
  /**
+  * API No. 1
+  * API Name : Initialize - Parse lrc & coverimages from mp3 API
+  * [POST] /initialize-parse
+  */
+ exports.postInitializeParse = async function(req, res){
+    const response = await userService.postInitializeParse();
+    return res.send(response);
+ };
+
+ /**
   * API No. 3
   * API Name : Initialize - Store Music info API
   * [POST] /initialize-store
@@ -62,7 +72,7 @@ process.on('exit', cleanupAndExit);
  exports.postInitializeStore = async function(req, res){
     const responseStore = await userService.postInitializeStore();
     return res.send(responseStore);
- }
+ };
 
  /**
   * API No. 4
@@ -72,7 +82,7 @@ process.on('exit', cleanupAndExit);
  exports.getMusicList = async function(req, res){
     const musicList = await userProvider.getMusicList();
     return res.send(musicList);
- }
+ };
 
  /**
   * API No. 5
@@ -84,4 +94,4 @@ process.on('exit', cleanupAndExit);
 
   const musicInfo = await userProvider.getMusicInfo(musicId);
   return res.send(musicInfo);
- }
+ };

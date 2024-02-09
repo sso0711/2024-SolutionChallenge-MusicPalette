@@ -85,6 +85,16 @@ async function processLrcCover(){
     });
 }
 
+exports.postInitializeParse = async function(){
+  try{
+    await processLrcCover();
+    return response(baseResponse.SUCCESS);
+  }catch(error){
+    logger.error(`App - userService postInitializeParse error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
+}
+
 exports.postInitializeStore = async function(){
     try{
         const mp3Directory = './assets/musics';
