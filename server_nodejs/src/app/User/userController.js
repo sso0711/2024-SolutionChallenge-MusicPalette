@@ -115,10 +115,10 @@ async function validateFirebaseIdToken(idToken){
   * [GET] /musics/:music_id
   */
  exports.getMusicInfo = async function(req, res){
-  const musicId = req.params.music_id;
+    const musicId = req.params.music_id;
 
-  const musicInfo = await userProvider.getMusicInfo(musicId);
-  return res.send(musicInfo);
+    const musicInfo = await userProvider.getMusicInfo(musicId);
+    return res.send(musicInfo);
  };
 
  /**
@@ -128,17 +128,31 @@ async function validateFirebaseIdToken(idToken){
   */
  exports.getUserLikes = async function(req, res){
   try{
-    const idToken = req.header('Authorization');
-    console.log(idToken);
-    // idToken 유효 확인
-    const userId = await validateFirebaseIdToken(idToken);
-    console.log(userId);
+      const idToken = req.header('Authorization');
+      // idToken 유효 확인
+      const userId = await validateFirebaseIdToken(idToken);
 
-    const userLikes = await userProvider.getUserLikes(userId);
-    return res.send(userLikes);
+      const userLikes = await userProvider.getUserLikes(userId);
+      return res.send(userLikes);
 
   }catch(error){
-    logger.error(`App - userController getUserLikes error\n: ${error.message}`);
-    return errResponse(baseResponse.DB_ERROR);
+      logger.error(`App - userController getUserLikes error\n: ${error.message}`);
+      return res.send(errResponse(baseResponse.DB_ERROR));
   }
+ }
+
+ /**
+  * API No. 7
+  * API Name : Add user like API
+  * [POST] /user/like/:music_id
+  */
+ exports.postUserLike = async function(req, res){
+    const idToken = req.header('Authorization');
+    // idToken 유효 확인
+    const userId = await validateFirebaseIdToken(idToken);
+
+    const musicId = req.params.music_id;
+
+    const userLikes = await userService.postUserLike(userId, musicId);
+    return res.send(userLikes);
  }

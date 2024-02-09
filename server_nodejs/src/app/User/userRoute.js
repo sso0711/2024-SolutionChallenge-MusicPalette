@@ -35,7 +35,7 @@ module.exports = function(app){
      app.get('/user/like', user.getUserLikes);
 
      // 7. add user like API
-    //  app.post('/user/like/:music_id', user.postUserLike);
+     app.post('/user/like/:music_id', user.postUserLike);
 
      // 8. delete user like API
     //  app.delete('/user/like/:music_id', user.deleteUserLike);

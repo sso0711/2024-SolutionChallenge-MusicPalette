@@ -187,8 +187,17 @@ exports.postInitializeStore = async function(){
       logger.error(`App - userService postInitializeServer error\n: ${error.message}`);
       return errResponse(baseResponse.DB_ERROR);
     }
+}
 
-
+exports.postUserLike = async function(userId, musicId){
+  try{
+    const db = admin.database();
+    const userLikes = await userDao.postUserLike(db, userId, musicId);
+    return userLikes;
+  }catch(error){
+    logger.error(`App - userService postUserLike error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
 }
 
 
