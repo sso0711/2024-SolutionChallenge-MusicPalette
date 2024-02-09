@@ -85,12 +85,68 @@ async function processLrcCover(){
     });
 }
 
+// image download from http and save
+async function downloadAndSaveImage(imageUrl, savePath) {
+  try {
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+
+    // save image
+    fs.writeFileSync(savePath, response.data);
+
+    console.log('Image downloaded and saved successfully.');
+  } catch (error) {
+    console.error('Error downloading or saving the image:', error.message || error);
+  }
+}
+
 exports.postInitializeParse = async function(){
   try{
     await processLrcCover();
     return response(baseResponse.SUCCESS);
   }catch(error){
     logger.error(`App - userService postInitializeParse error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
+}
+
+exports.postInitializeMade = async function(){
+  try{
+    const db = admin.database();
+    // ML Server endpoint
+    const apiUrl = 'https://ml-server.com/api/endpoint';
+
+    const mp3Files = await fs.promises.readdir('./assets/musics');
+    const encodedTitle = mp3Files.map(file => {
+      const lastIndex = file.lastIndexOf('.');
+      return encodeURI(file.substring(0, lastIndex));
+    });
+
+    for(let i = 0; i < mp3Files.length; i++){
+      const requestData = {
+        link: 'http://music-palette.shop/musics/mp3-file/' + encodedTitle[i] +'.mp3'
+      }
+
+      axios.post(apiUrl, requestData)
+      .then(async response => {
+        // 서버 응답의 JSON 데이터에서 필요한 정보를 추출
+        const imageLink = response.data.link;
+        const imageExplain = response.data.explain;
+
+        await downloadAndSaveImage(imageLink, './assets/madeimages');
+        await userDao.postInitializeMade(db, (i+1), imageExplain);
+      })
+      .catch(error => {
+        // 오류 처리
+        console.error('Error:', error.message || error);
+      });
+
+      return response(baseResponse.SUCCESS);
+
+    }
+
+
+  }catch(error){
+    logger.error(`App - userService postInitializeMade error\n: ${error.message}`);
     return errResponse(baseResponse.DB_ERROR);
   }
 }

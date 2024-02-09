@@ -16,11 +16,11 @@ module.exports = function(app){
      // provide mp3 files
      app.use('/musics/mp3-file', express.static('./assets/musics'));
 
-    //  // 1. initialize - lrc & coverimages API
+     // 1. initialize - lrc & coverimages API
      app.post('/initialize-parse', user.postInitializeParse);
 
-    //  // 2. initialize - get madeimages from ML Server API
-    //  app.post('/initialize-made', );
+     // 2. initialize - get madeimages from ML Server API
+     app.post('/initialize-made', user.postInitializeMade);
 
      // 3. initialize - store musics info in db API 
      app.post('/initialize-store', user.postInitializeStore);

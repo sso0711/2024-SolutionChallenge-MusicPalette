@@ -4,7 +4,7 @@ const baseResponseStatus = require("../../../config/baseResponseStatus");
 // set musicId increase by 1
 async function increaseMusicId(db){
     let musicId = 0;
-    const result = await db.ref('last_music_id').transaction((currentCounter) => {
+    await db.ref('last_music_id').transaction((currentCounter) => {
         if (currentCounter === null) {
           // music_id가 아직 없으면 1로 초기화
           musicId = 1;
@@ -16,6 +16,15 @@ async function increaseMusicId(db){
     });
     console.log(musicId);
     return musicId;
+}
+
+async function postInitializeMade(db, musicId, imageExplain){
+    const ref = db.ref('Musics/' + musicId);
+    await ref.update(
+        {
+            "image_explain": imageExplain
+        }
+    );
 }
 
 async function postInitializeStore(db, postInitializeStoreParams){
@@ -67,6 +76,7 @@ async function getMusicInfo(db, musicId){
 }
 
 module.exports ={
+    postInitializeMade,
     postInitializeStore,
     getMusicList,
     getMusicInfo
