@@ -2,6 +2,7 @@ module.exports = function(app){
     const user = require('./userController');
     const jwtMiddleware = require('../../../config/jwtMiddleware');
     const express = require('express');
+    app.use(express.urlencoded({ extended: true }));
 
     // 0. 테스트 API
      app.get('/app/test', user.getTest);
@@ -13,7 +14,7 @@ module.exports = function(app){
      app.use('/images/made-image', express.static('./assets/madeimages'));
 
      // provide mp3 files
-    //  app.use('/musics/mp3-file', express.static('./assets/musics'));
+     app.use('/musics/mp3-file', express.static('./assets/musics'));
 
     //  // 1. initialize - lrc & coverimages API
     //  app.post('/initialize-parse', );

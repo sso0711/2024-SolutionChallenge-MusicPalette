@@ -10,7 +10,9 @@ const {emit} = require("nodemon");
 // initialize firebase admin SDK 
 const admin = require("firebase-admin");
 const serviceAccount = require("../../../config/music-palette-firebase-adminsdk-4u2ui-4db9a9b2ff.json");
-const databaseURL = require("../../../config/database").databaseURL;
+const databaseURL = require("../../../config/database").getDatabaseURL();
+
+console.log(databaseURL);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),

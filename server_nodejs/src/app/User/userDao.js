@@ -19,14 +19,15 @@ async function increaseMusicId(db){
 
 async function postInitializeStore(db, postInitializeStoreParams){
     const musicId = await increaseMusicId(db) + '';
-    const ref = db.ref('TestMusic/' + musicId);
+    const ref = db.ref('Musics/' + musicId);
 
     await ref.set(
         {
             title: postInitializeStoreParams[0],
             encoded_title: postInitializeStoreParams[1],
             artist: postInitializeStoreParams[2],
-            lyrics: postInitializeStoreParams[3]
+            lyrics: postInitializeStoreParams[3],
+            vibrations: postInitializeStoreParams[4]
         }
     );
 
