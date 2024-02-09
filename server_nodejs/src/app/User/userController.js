@@ -73,3 +73,15 @@ process.on('exit', cleanupAndExit);
     const musicList = await userProvider.getMusicList();
     return res.send(musicList);
  }
+
+ /**
+  * API No. 5
+  * API Name : Get a music info API
+  * [GET] /musics/:music_id
+  */
+ exports.getMusicInfo = async function(req, res){
+  const musicId = req.params.music_id;
+
+  const musicInfo = await userProvider.getMusicInfo(musicId);
+  return res.send(musicInfo);
+ }

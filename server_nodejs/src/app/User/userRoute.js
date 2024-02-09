@@ -28,4 +28,7 @@ module.exports = function(app){
      // 4. get all musics list API
      app.get('/musics', user.getMusicList);
 
+     // 5. get a music info API
+     app.get('/musics/:music_id', user.getMusicInfo);
+
 };

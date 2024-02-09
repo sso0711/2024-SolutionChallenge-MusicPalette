@@ -54,7 +54,20 @@ async function getMusicList(db){
     return JSON.stringify(musicList, null, 4);
 }
 
+async function getMusicInfo(db, musicId){
+    const ref = db.ref('Musics/' +(musicId +''));
+    const data = (await ref.once('value')).val();
+
+    const musicInfo = {
+        "lyrics": JSON.parse(data.lyrics),
+        "vibrations": JSON.parse(data.vibrations)
+    };
+
+    return JSON.stringify(musicInfo, null, 2);
+}
+
 module.exports ={
     postInitializeStore,
-    getMusicList
+    getMusicList,
+    getMusicInfo
 };
