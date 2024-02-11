@@ -1,15 +1,9 @@
 const {logger} = require("../../../config/winston");
-const {pool} = require("../../../config/database");
-const secret_config = require("../../../config/secret");
-const userProvider = require("./userProvider");
 const userDao = require("./userDao");
 const baseResponse = require("../../../config/baseResponseStatus");
 const {response} = require("../../../config/response");
 const {errResponse} = require("../../../config/response");
 
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const {connect} = require("http2");
 const admin = require("firebase-admin");
 
 const fs = require('fs');
@@ -210,29 +204,3 @@ exports.deleteUserLike = async function(userId, musicId){
     return errResponse(baseResponse.DB_ERROR);
   }
 }
-
-
-// const mm = require('music-metadata');
-// const path = require('path');
-
-// const mp3FilePath = 'path/to/your/file.mp3';
-
-// async function getMp3Metadata(filePath) {
-//   try {
-//     const metadata = await mm.parseFile(filePath, { duration: true });
-    
-//     // Common metadata (artist, title, album, etc.)
-//     const commonMetadata = metadata.common;
-//     console.log('Artist:', commonMetadata.artist);
-//     console.log('Title:', commonMetadata.title);
-//     console.log('Album:', commonMetadata.album);
-
-//     // Additional metadata (e.g., duration)
-//     console.log('Duration:', metadata.format.duration); // Duration in seconds
-//   } catch (error) {
-//     console.error('Error reading metadata:', error.message);
-//   }
-// }
-
-// getMp3Metadata(mp3FilePath);
-
