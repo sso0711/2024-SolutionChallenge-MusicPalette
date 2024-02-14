@@ -3,9 +3,6 @@ module.exports = function(app){
     const express = require('express');
     app.use(express.urlencoded({ extended: true }));
 
-    // 0. 테스트 API
-     app.get('/app/test', user.getTest);
-
      // provide coverimages
      app.use('/images/cover-image', express.static('./assets/coverimages'));
 

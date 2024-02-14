@@ -6,15 +6,13 @@ async function increaseMusicId(db){
     let musicId = 0;
     await db.ref('last_music_id').transaction((currentCounter) => {
         if (currentCounter === null) {
-          // music_id가 아직 없으면 1로 초기화
-          musicId = 1;
+          musicId = 1; // if music_id doesn't exist, initialize to 1
           return 1;
         }
-        // music_id가 이미 있으면 +1
+        // if music_id already exists, music_id + 1
         musicId = currentCounter + 1;
         return musicId;
     });
-    console.log(musicId);
     return musicId;
 }
 
@@ -28,18 +26,24 @@ async function postInitializeMade(db, musicId, imageExplain){
 }
 
 async function postInitializeStore(db, postInitializeStoreParams){
-    const musicId = await increaseMusicId(db) + '';
-    const ref = db.ref('Musics/' + musicId);
+    const isDBFullref = db.ref('Musics');
+    let isDBFull = (await isDBFullref.once('value')).val();
 
-    await ref.set(
-        {
-            title: postInitializeStoreParams[0],
-            encoded_title: postInitializeStoreParams[1],
-            artist: postInitializeStoreParams[2],
-            lyrics: postInitializeStoreParams[3],
-            vibrations: postInitializeStoreParams[4]
-        }
-    );
+    // it means db is empty
+    if(isDBFull == null){
+        const musicId = await increaseMusicId(db) + '';
+        const ref = db.ref('Musics/' + musicId);
+    
+        await ref.set(
+            {
+                title: postInitializeStoreParams[0],
+                encoded_title: postInitializeStoreParams[1],
+                artist: postInitializeStoreParams[2],
+                lyrics: postInitializeStoreParams[3],
+                vibrations: postInitializeStoreParams[4]
+            }
+        );
+    }
 
 }
 
@@ -56,7 +60,8 @@ async function getMusicList(db){
             "song_id": i,
             "title": data.title,
             "encoded_title": data.encoded_title,
-            "artist": data.artist
+            "artist": data.artist,
+            "image_explain": data.image_explain
         });
     }
     

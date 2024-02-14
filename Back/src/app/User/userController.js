@@ -24,11 +24,11 @@ function cleanupAndExit() {
     admin.app().delete()
       .then(() => {
         console.log('Firebase Admin SDK cleanup successful');
-        process.exit(0); // 정상 종료
+        process.exit(0); // normal exit
       })
       .catch((error) => {
         console.error('Error cleaning up Firebase Admin SDK:', error);
-        process.exit(1); // 오류로 종료
+        process.exit(1); // abnormal exit
       });
   }
 }
@@ -38,32 +38,17 @@ process.on('exit', cleanupAndExit);
 async function validateFirebaseIdToken(idToken){
   try {
     const userRecord = await admin.auth().getUser(idToken);
-    // 해당 UID의 사용자 정보를 가져옴
-    console.log('Valid UID:', userRecord.uid);
+    // get user information for the corresponding UID
+    // console.log('Valid UID:', userRecord.uid);
     return userRecord.uid; 
 
   } catch (error) {
-    // UID가 Firebase에 존재하지 않거나 검증에 실패한 경우 처리
+    // UID doesn't exist in firbase or fail to verification
     console.error('Invalid UID:', error);
-    throw error; // 에러를 다시 throw하여 호출자에게 전파할 수 있음
+    throw error;
+    // 
   }
 }
-
-/**
- * API No. 0
- * API Name : 테스트 API
- * [GET] /app/test
- */
- exports.getTest = async function (req, res) {
-    const db = admin.database();
-    const ref = db.ref('Test');
-    
-    await ref.set({
-        test: "Test successful"
-    });
-
-    return res.send(response(baseResponse.SUCCESS))
- };
 
  /**
   * API No. 1
@@ -125,7 +110,7 @@ async function validateFirebaseIdToken(idToken){
  exports.getUserLikes = async function(req, res){
   try{
       const idToken = req.header('Authorization');
-      // idToken 유효 확인
+      // check vaildity of idToken
       const userId = await validateFirebaseIdToken(idToken);
 
       const userLikes = await userProvider.getUserLikes(userId);
@@ -144,7 +129,7 @@ async function validateFirebaseIdToken(idToken){
   */
  exports.postUserLike = async function(req, res){
     const idToken = req.header('Authorization');
-    // idToken 유효 확인
+    // check vaildity of idToken
     const userId = await validateFirebaseIdToken(idToken);
 
     const musicId = req.params.music_id;
@@ -160,7 +145,7 @@ async function validateFirebaseIdToken(idToken){
   */
  exports.deleteUserLike = async function(req, res){
     const idToken = req.header('Authorization');
-    // idToken 유효 확인
+    // check vaildity of idToken
     const userId = await validateFirebaseIdToken(idToken);
 
     const musicId = req.params.music_id;

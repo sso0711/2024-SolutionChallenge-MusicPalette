@@ -12,7 +12,7 @@ const axios = require('axios');
 const path = require('path');
 const { exec } = require('child_process');
 
-// Service: Create, Update, Delete 비즈니스 로직 처리
+// Service: Create, Update, Delete business logic 
 
 // change lrc to json
 async function lrcToJson(lrcFilePath) {
@@ -34,6 +34,24 @@ async function lrcToJson(lrcFilePath) {
     return JSON.stringify(lyrics, null, 2);
 }
 
+// change lrc to string
+async function lrcToString(lrcFilePath){
+  const lrcContent = fs.readFileSync(lrcFilePath, 'utf-8');
+  const lines = lrcContent.split('\n');
+  let lyrics = '';
+
+  for (const line of lines) {
+    const match = line.match(/\[([0-9:.]+)\](.*)/);
+
+    if (match) {
+      const text = match[2].trim();
+      lyrics += text;
+    }
+  }
+  return lyrics;
+
+}
+
 // vibration to json
 async function vibrationToJSON(mp3FilePath){
   return new Promise((resolve, reject) => {
@@ -41,7 +59,7 @@ async function vibrationToJSON(mp3FilePath){
     
     const vibrations = [];
 
-    // madmom module & scipy module 환경설정 _ 설정 안하면 nodejs에서 모듈 파악 불가
+    // madmom module & scipy module setting _ for nodejs에서 모듈 파악
     process.env.PYTHONPATH = './assets/madmom:/home/thdudp7007/.local/lib/python3.8/site-packages';
 
     exec(`python3 ${pythonScript} "${mp3FilePath}"`, (error, stdout, stderr) => {
@@ -49,7 +67,7 @@ async function vibrationToJSON(mp3FilePath){
         console.error('Execution Error:', error);
         reject(stderr || 'Execution failed');
       } else {
-        // 파이썬 스크립트에서 여러 줄로 출력한 값을 JSON 형태로 파싱
+        // Parsing output value (multiple lines) of python scrypt into JSON format 
         stdout.trim().split('\n').map(line => {
           const [time, strength] = JSON.parse(line);
           vibrations.push({"time": time, "strength": strength});
@@ -65,7 +83,7 @@ async function processLrcCover(){
     return new Promise((resolve, reject) => {
         const pythonScript = './assets/lrc_parsing_mp3.py';
 
-        // madmom module & scipy module 환경설정 _ 설정 안하면 nodejs에서 모듈 파악 불가
+        // madmom module & scipy module setting _ 설정 안하면 nodejs에서 모듈 파악 불가
         process.env.PYTHONPATH = '/home/thdudp7007/.local/lib/python3.8/site-packages:./assets/add_album_cover.py';
     
         exec(`python3 ${pythonScript}`, (error, stdout, stderr) => {
@@ -107,36 +125,46 @@ exports.postInitializeMade = async function(){
   try{
     const db = admin.database();
     // ML Server endpoint
-    const apiUrl = 'https://ml-server.com/api/endpoint';
+    const apiUrl = 'https://b981-59-5-249-117.ngrok-free.app';
 
     const mp3Files = await fs.promises.readdir('./assets/musics');
+for(let i = 0; i < mp3Files.length; i++){
+      console.log(mp3Files[i]);
+    }
     const encodedTitle = mp3Files.map(file => {
       const lastIndex = file.lastIndexOf('.');
       return encodeURI(file.substring(0, lastIndex));
     });
 
+    // mp3Files.length
     for(let i = 0; i < mp3Files.length; i++){
       const requestData = {
-        link: 'http://music-palette.shop/musics/mp3-file/' + encodedTitle[i] +'.mp3'
+        //encodedTitle[i]
+        link: 'http://music-palette.shop/musics/mp3-file/' + encodedTitle[i] +'.mp3',
+        lyrics: lrcToString('./assets/lyrics/' + decodeURI(encodedTitle[i])+'.lrc')
       }
 
+      console.log('http://music-palette.shop/musics/mp3-file/' +encodedTitle[i] +'.mp3');
+      console.log(lrcToString('./assets/lyrics/' + decodeURI(encodedTitle[i])+'.lrc'))
       axios.post(apiUrl, requestData)
       .then(async response => {
-        // 서버 응답의 JSON 데이터에서 필요한 정보를 추출
-        const imageLink = response.data.link;
-        const imageExplain = response.data.explain;
+        // get information from JSON data 
+        const imageLink = response.data.url;
+        console.log(imageLink);
+        const imageExplain = response.data.text;
+        console.log(imageExplain);
 
-        await downloadAndSaveImage(imageLink, './assets/madeimages');
+        await downloadAndSaveImage(imageLink, './assets/madeimages/' + decodeURI(encodedTitle[i])+'.jpg');
+        // (i+1)
         await userDao.postInitializeMade(db, (i+1), imageExplain);
       })
       .catch(error => {
-        // 오류 처리
+        // Process Error
         console.error('Error:', error.message || error);
       });
 
-      return response(baseResponse.SUCCESS);
-
     }
+    return response(baseResponse.SUCCESS);
 
 
   }catch(error){
@@ -155,7 +183,7 @@ exports.postInitializeStore = async function(){
         const lrcFiles = await fs.promises.readdir(lrcDirectory);
         const lrcFilePath = lrcFiles.map(file => path.join(lrcDirectory, file));
 
-        // 파일 목록을 클라이언트에게 전송
+        // send list of files to client
         const encodedTitle = mp3Files.map(file => {
           const lastIndex = file.lastIndexOf('.');
           return encodeURI(file.substring(0, lastIndex));
