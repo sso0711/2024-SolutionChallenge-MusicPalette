@@ -88,14 +88,6 @@ class _MypageState extends State<Mypage> {
                           ),
                         ),
                         const Divider(),
-                        InkWell(
-                          child: Container(
-                            color: Colors.deepPurple,
-                            height: 60,
-                            width: 60,
-                          ),
-                          onTap: () {},
-                        ),
                       ],
                     ),
             ],

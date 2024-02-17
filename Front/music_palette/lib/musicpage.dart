@@ -1,19 +1,29 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:music_palette/api_sevice.dart';
+import 'package:music_palette/login_service.dart';
+import 'package:music_palette/music_data.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:text_scroll/text_scroll.dart';
 import 'package:vibration/vibration.dart';
+import 'package:http/http.dart' as http;
 
 class MusicPage extends StatefulWidget {
-  final String name;
-  final String singer;
-
-  const MusicPage({
+  MyMusic music;
+  MusicUser user;
+  //late Future<List> musicInfo = ApiService.getMusicInfo(musicId: music.id);
+  MusicPage({
     super.key,
-    required this.name,
-    required this.singer,
+    required this.music,
+    required this.user,
   });
 
   @override
@@ -26,19 +36,36 @@ class _MusicPageState extends State<MusicPage> {
   late Duration now_position = const Duration();
   StreamController<Duration> position = StreamController<Duration>();
 
-  late List testlrc = getlrc();
-  late List testvive = getvive();
+  final ItemScrollController itemScrollController = ItemScrollController();
+  final ScrollOffsetController scrollOffsetController =
+      ScrollOffsetController();
+  final ItemPositionsListener itemPositionsListener =
+      ItemPositionsListener.create();
+  final ScrollOffsetListener scrollOffsetListener =
+      ScrollOffsetListener.create();
+
+  //late List testlrc = getlrc();
+  //late List vive = getvive();
+  late Future<List> musicInfo;
+  late List lyric;
+  late List vive;
   late String now_lrc = "";
   late String next_lrc = "";
   int now = 0;
   int nowvive = 0;
 
   bool play = true;
+  bool isEx = false;
 
   Future<void> playMusic() async {
-    String music = "musics/${widget.name}.mp3";
+    final url =
+        ApiService.getMp3FileUri(encodedtitle: widget.music.encodedtitle);
+    //print("--------------------------test");
+    await player.play(url);
+  }
 
-    await player.play(AssetSource(music));
+  Future<void> resumeMusic() async {
+    await player.resume();
   }
 
   Future<void> pauseMusic() async {
@@ -60,30 +87,30 @@ class _MusicPageState extends State<MusicPage> {
     // for lrc
     while (flag) {
       //print(i);
-      if (i >= testlrc.length) {
+      if (i >= lyric.length - 1) {
         break;
-      } else if (newPosition.inMilliseconds <= testlrc[0][0].inMilliseconds) {
+      } else if (newPosition.inMilliseconds <= lyric[0][0].inMilliseconds) {
         break;
-      } else if (testlrc[i][0].inMilliseconds <= newPosition.inMilliseconds &&
-          newPosition.inMilliseconds <= testlrc[i + 1][0].inMilliseconds) {
+      } else if (lyric[i][0].inMilliseconds <= newPosition.inMilliseconds &&
+          newPosition.inMilliseconds <= lyric[i + 1][0].inMilliseconds) {
         break;
       } else {
-        //print("testi : ${testlrc[i][0].inMilliseconds}");
+        //print("testi : ${lyric[i][0].inMilliseconds}");
         i = i + 1;
       }
     }
     // for vive
     while (flag) {
       //print(i);
-      if (j >= testvive.length) {
+      if (j >= vive.length) {
         break;
-      } else if (newPosition.inMilliseconds <= testvive[0][0].inMilliseconds) {
+      } else if (newPosition.inMilliseconds <= vive[0][0].inMilliseconds) {
         break;
-      } else if (testvive[j][0].inMilliseconds <= newPosition.inMilliseconds &&
-          newPosition.inMilliseconds <= testvive[j + 1][0].inMilliseconds) {
+      } else if (vive[j][0].inMilliseconds <= newPosition.inMilliseconds &&
+          newPosition.inMilliseconds <= vive[j + 1][0].inMilliseconds) {
         break;
       } else {
-        //print("testi : ${testlrc[i][0].inMilliseconds}");
+        //print("testi : ${lyric[i][0].inMilliseconds}");
         j = j + 1;
       }
     }
@@ -91,77 +118,166 @@ class _MusicPageState extends State<MusicPage> {
     //print("set - $i");
     setState(() {
       now = i;
-      now_lrc = testlrc[now][1];
-      next_lrc = testlrc[now + 1][1];
+      now_lrc = lyric[now][1];
+      if (now >= lyric.length - 1) {
+        next_lrc = " ";
+      } else {
+        next_lrc = lyric[now + 1][1];
+      }
       nowvive = j;
+    });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    //print("dispose??");
+  }
+
+  void startMusic() {
+    now_lrc = lyric[now][1];
+    if (now >= lyric.length - 1) {
+      next_lrc = " ";
+    } else {
+      next_lrc = lyric[now + 1][1];
+    }
+
+    player.onPositionChanged.listen((Duration p) {
+      setState(() {
+        now_position = p;
+        position.add(p);
+        if (!(now >= lyric.length - 1)) {
+          if (lyric[now + 1][0].inMilliseconds < p.inMilliseconds) {
+            now = now + 1;
+            //now_lrc = lyric[now][1];
+            if (now >= (lyric.length - 1)) {
+              //print("test");
+              //next_lrc = "";
+            } else {
+              //next_lrc = lyric[now + 1][1];
+            }
+          }
+        }
+        if (nowvive < vive.length) {
+          if (vive[nowvive][0].inMilliseconds < p.inMilliseconds) {
+            if (vive[nowvive][1] > 0.5) {
+              Vibration.vibrate(amplitude: 128);
+              //print('test');
+            } else if (vive[nowvive][1] > 0.25) {
+              Vibration.vibrate(amplitude: 50);
+            } else if (vive[nowvive][1] > 0.1) {
+              Vibration.vibrate(amplitude: 10);
+            }
+            nowvive = nowvive + 1;
+            //print(nowvive);
+          }
+        }
+      });
     });
   }
 
   @override
   void initState() {
     super.initState();
-    now_lrc = testlrc[now][1];
-    next_lrc = testlrc[now + 1][1];
+    musicInfo = ApiService.getMusicInfo(musicId: widget.music.id);
+
     playMusic();
     player.onDurationChanged.listen((Duration d) {
-      //print('Max duration: $d');
       setState(() {
         duration = d;
-        //testlrc = getlrc(duration);
       });
-    });
-    player.onPositionChanged.listen((Duration p) {
-      setState(() {
-        now_position = p;
-        position.add(p);
-        if (!(now >= testlrc.length)) {
-          if (testlrc[now + 1][0].inMilliseconds < p.inMilliseconds) {
-            now = now + 1;
-            now_lrc = testlrc[now][1];
-            next_lrc = testlrc[now + 1][1];
-            print("test $now");
-          }
-        }
-        if (testvive[nowvive][0].inMilliseconds < p.inMilliseconds) {
-          if (testvive[nowvive][1] > 0.5) {
-            Vibration.vibrate(amplitude: 128);
-            //print('test');
-          } else if (testvive[nowvive][1] > 0.25) {
-            Vibration.vibrate(amplitude: 50);
-          } else if (testvive[nowvive][1] > 0.1) {
-            Vibration.vibrate(amplitude: 10);
-          }
-          nowvive = nowvive + 1;
-          //print(nowvive);
-        }
-      });
-    });
-    player.onPlayerStateChanged.listen((event) {
-      switch (event) {
-        case PlayerState.playing:
-          print("playing");
-          break;
-        case PlayerState.stopped:
-          print("stop");
-          break;
-        case PlayerState.completed:
-          print("complete");
-          break;
-        case PlayerState.paused:
-          print("paused");
-          break;
-        case PlayerState.disposed:
-          print("disposed");
-          break;
-      }
     });
   }
 
-  void testMusic() {}
+  void downloadImage(String url) async {
+    var status = await Permission.storage.status;
+
+    http.Response response = await http.get(
+      Uri.parse(url),
+    );
+
+    if (Platform.isAndroid) {
+      final plugin = DeviceInfoPlugin();
+      final android = await plugin.androidInfo;
+
+      if (android.version.sdkInt >= 33) {
+        try {
+          await ImageGallerySaver.saveImage(
+            Uint8List.fromList(response.bodyBytes),
+            quality: 100,
+            name: (DateTime.now().millisecondsSinceEpoch.toString()),
+          );
+
+          popUp();
+        } catch (e) {
+          print("실패");
+        }
+      }
+    } else {
+      if (status.isDenied) {
+        await Permission.storage.request();
+      } else {
+        try {
+          await ImageGallerySaver.saveImage(
+            Uint8List.fromList(response.bodyBytes),
+            quality: 100,
+            name: (DateTime.now().millisecondsSinceEpoch.toString()),
+          );
+
+          //print(response.bodyBytes);
+
+          popUp();
+        } catch (e) {
+          print("실패");
+        }
+      }
+    }
+  }
+
+  void popUp() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("생성한 이미지 다운로드"),
+          content: const Text("이미지 다운로드가 완료되었습니다."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).primaryColor,
+        leading: IconButton(
+            onPressed: () {
+              //stopMusic();
+              player.dispose();
+              Navigator.of(context).pop();
+            },
+            icon: const Icon(Icons.arrow_back_ios_sharp)),
+        title: const Text(
+          "Music Palette",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -174,74 +290,151 @@ class _MusicPageState extends State<MusicPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: Center(
-          child: Column(
-            children: [
-              Container(
-                height: 40,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  InkWell(
-                      onTap: () {
-                        pauseMusic();
-                        Navigator.of(context).pop();
-                      },
-                      child: const Icon(Icons.arrow_back_ios_sharp)),
-                ],
-              ),
-              const SizedBox(
-                height: 25,
-              ),
-              Container(
-                width: 350,
-                height: 250,
-                color: Colors.amber,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              SizedBox(
-                height: 60,
-                child: Column(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        showModalBottomSheet(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          backgroundColor: Colors.amber,
-                          isScrollControlled: true,
-                          context: context,
-                          builder: (context) {
-                            return SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.9,
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(20, 35, 20, 15),
-                                child: ListView.separated(
-                                  scrollDirection: Axis.vertical,
-                                  itemCount: testlrc.length,
-                                  itemBuilder: (context, index) {
-                                    return Text(
-                                      testlrc[index][1],
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                      ),
-                                    );
-                                  },
-                                  separatorBuilder: (context, index) =>
-                                      const SizedBox(
-                                    height: 10,
+        child: FutureBuilder(
+          future: musicInfo,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              lyric = snapshot.data![0];
+              vive = snapshot.data![1];
+              startMusic();
+              return makeMusicPage(context);
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Center makeMusicPage(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                isEx = !isEx;
+              });
+            },
+            child: isEx
+                ? Container(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: MediaQuery.of(context).size.width * 0.9,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      image: DecorationImage(
+                        opacity: 0.3,
+                        fit: BoxFit.fitWidth,
+                        image: NetworkImage(
+                          ApiService.getAiImageUri(
+                              encodedtitle: widget.music.encodedtitle),
+                        ),
+                      ),
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Text(
+                          widget.music.imageEx,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  )
+                : Image.network(
+                    ApiService.getAiImageUri(
+                        encodedtitle: widget.music.encodedtitle),
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: MediaQuery.of(context).size.width * 0.9,
+                  ),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              downloadImage(
+                ApiService.getAiImageUri(
+                    encodedtitle: widget.music.encodedtitle),
+              );
+            },
+            icon: const Icon(
+              Icons.download_rounded,
+              color: Colors.white,
+            ),
+            label: const Text(
+              "생성한 이미지 다운로드 받기",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          SizedBox(
+            height: 60,
+            child: Column(
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      showModalBottomSheet(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        backgroundColor: Colors.black87,
+                        isScrollControlled: true,
+                        context: context,
+                        builder: (context) {
+                          return Container(
+                            height: MediaQuery.of(context).size.height * 0.9,
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(50),
+                              image: DecorationImage(
+                                  image: NetworkImage(
+                                    ApiService.getCoverImageString(
+                                        encodedtitle:
+                                            widget.music.encodedtitle),
                                   ),
-                                ),
+                                  fit: BoxFit.cover,
+                                  opacity: 0.3),
+                            ),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 35, 20, 15),
+                              child: StreamBuilder(
+                                stream: player.onPositionChanged,
+                                builder: (context, snapshot) {
+                                  return ListView.separated(
+                                    scrollDirection: Axis.vertical,
+                                    itemCount: lyric.length,
+                                    itemBuilder: (context, index) {
+                                      return Text(
+                                        lyric[index][1],
+                                        style: TextStyle(
+                                          fontSize: (now == index) ? 20 : 14,
+                                          color: Colors.white,
+                                          fontWeight: (now == index)
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      );
+                                    },
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(
+                                      height: 10,
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        );
-                      },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: FittedBox(
+                      fit: BoxFit.fitWidth,
                       child: Text(
                         now_lrc,
                         style: const TextStyle(
@@ -250,2070 +443,215 @@ class _MusicPageState extends State<MusicPage> {
                             fontWeight: FontWeight.bold),
                       ),
                     ),
-                    SizedBox(
-                      height: 15,
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: Text(
-                          next_lrc,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white60,
-                          ),
-                        ),
+                  ),
+                ),
+                SizedBox(
+                  height: 15,
+                  child: FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text(
+                      next_lrc,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white60,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.name,
-                        style: const TextStyle(
-                            fontSize: 30,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        widget.singer,
-                        style: const TextStyle(
-                            fontSize: 15, color: Colors.white60),
-                      ),
-                    ],
                   ),
-                  const Icon(
-                    Icons.favorite_border,
-                    color: Colors.white,
-                    size: 40,
+                ),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    child: TextScroll(
+                      widget.music.title,
+                      numberOfReps: 1,
+                      fadeBorderSide: FadeBorderSide.right,
+                      fadedBorder: true,
+                      style: const TextStyle(
+                          fontSize: 30,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Text(
+                    widget.music.artist,
+                    style: const TextStyle(fontSize: 15, color: Colors.white60),
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 5,
-              ),
-              StreamBuilder(
-                stream: position.stream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return ProgressBar(
-                      baseBarColor: Colors.white38,
-                      progressBarColor: Colors.amber[100],
-                      thumbColor: Colors.amber[200],
-                      timeLabelTextStyle: const TextStyle(color: Colors.white),
-                      progress: snapshot.data!,
-                      total: duration,
-                      onSeek: (newDuration) {
-                        seekMusic(newDuration);
-                      },
-                    );
-                  } else {
-                    return const CircularProgressIndicator();
-                  }
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(100),
+                  splashColor: Colors.white.withOpacity(0.3),
+                  splashFactory: InkRipple.splashFactory,
+                  onTap: () {
+                    setState(() {
+                      widget.music.like = !widget.music.like;
+                      widget.user.likeList[widget.music.id] = widget.music.like;
+                      if (!widget.music.like) {
+                        widget.user.setLike(ApiService.deleteLike(
+                            uID: widget.user.userId, musicId: widget.music.id));
+                      } else {
+                        widget.user.setLike(ApiService.addLike(
+                            uID: widget.user.userId, musicId: widget.music.id));
+                      }
+                      //print(widget.user.likeList);
+                    });
+                  },
+                  child: widget.music.like
+                      ? const Icon(
+                          Icons.favorite,
+                          color: Colors.white,
+                          size: 40,
+                        )
+                      : const Icon(
+                          Icons.favorite_border,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                ),
+              )
+            ],
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          StreamBuilder(
+            stream: position.stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return ProgressBar(
+                  baseBarColor: Colors.white38,
+                  progressBarColor: Colors.white70,
+                  thumbColor: const Color.fromARGB(255, 117, 157, 190),
+                  timeLabelTextStyle: const TextStyle(color: Colors.white),
+                  progress: snapshot.data!,
+                  total: duration,
+                  onSeek: (newDuration) {
+                    seekMusic(newDuration);
+                  },
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
+            },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            if (now_position.inSeconds <= 10) {
-                              seekMusic(Duration.zero);
-                            } else {
-                              seekMusic(Duration(
-                                  seconds: now_position.inSeconds - 10));
-                            }
-                          });
-                        },
-                        child: const Icon(
-                          Icons.skip_previous_rounded,
-                          color: Colors.white60,
-                          size: 60,
-                        ),
-                      ),
-                      const Text(
-                        "skip prev 10s",
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(
-                    width: 50,
+                    height: 10,
                   ),
                   InkWell(
                     onTap: () {
-                      if (play) {
-                        setState(() {
-                          play = !play;
-                          pauseMusic();
-                        });
-                      } else {
-                        setState(() {
-                          play = !play;
-                          playMusic();
-                        });
-                      }
+                      setState(() {
+                        if (now_position.inSeconds <= 10) {
+                          seekMusic(Duration.zero);
+                        } else {
+                          seekMusic(
+                              Duration(seconds: now_position.inSeconds - 10));
+                        }
+                      });
                     },
-                    child: play
-                        ? const Icon(
-                            Icons.pause_circle_filled_rounded,
-                            color: Colors.white,
-                            size: 80,
-                          )
-                        : const Icon(
-                            Icons.play_circle,
-                            color: Colors.white,
-                            size: 80,
-                          ),
+                    child: const Icon(
+                      Icons.skip_previous_rounded,
+                      color: Colors.white60,
+                      size: 60,
+                    ),
                   ),
-                  const SizedBox(
-                    width: 50,
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            if (duration.inSeconds - now_position.inSeconds <=
-                                10) {
-                              stopMusic();
-                            } else {
-                              seekMusic(Duration(
-                                  seconds: now_position.inSeconds + 10));
-                            }
-                          });
-                        },
-                        child: const Icon(
-                          Icons.skip_next_rounded,
-                          color: Colors.white60,
-                          size: 60,
-                        ),
-                      ),
-                      const Text(
-                        "skip next 10s",
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    "skip prev 10s",
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(
-                height: 20,
+                width: 50,
               ),
               InkWell(
                 onTap: () {
-                  Vibration.vibrate(amplitude: 100);
-                  print("test");
+                  if (play) {
+                    setState(() {
+                      play = !play;
+                      //print(play);
+                    });
+                    pauseMusic();
+                  } else {
+                    setState(() {
+                      play = !play;
+                      //print(play);
+                    });
+                    resumeMusic();
+                  }
                 },
-                child: const Icon(
-                  Icons.ac_unit_sharp,
-                  color: Colors.white,
-                ),
+                child: play
+                    ? const Icon(
+                        Icons.pause_circle_filled_rounded,
+                        color: Colors.white,
+                        size: 80,
+                      )
+                    : const Icon(
+                        Icons.play_circle,
+                        color: Colors.white,
+                        size: 80,
+                      ),
+              ),
+              const SizedBox(
+                width: 50,
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (duration.inSeconds - now_position.inSeconds <= 10) {
+                          stopMusic();
+                        } else {
+                          seekMusic(
+                              Duration(seconds: now_position.inSeconds + 10));
+                        }
+                      });
+                    },
+                    child: const Icon(
+                      Icons.skip_next_rounded,
+                      color: Colors.white60,
+                      size: 60,
+                    ),
+                  ),
+                  const Text(
+                    "skip next 10s",
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
+          const SizedBox(
+            height: 20,
+          ),
+        ],
       ),
     );
-  }
-
-  static List getlrc() {
-    List returnlrc = [];
-    List<Map<String, String>> txtduration = [
-      {"00:08.6": "'뭐해?'라는 두 글자에"},
-      {"00:11.3": "'네가 보고 싶어' 나의 속마음을 담아 우"},
-      {"00:17.6": "이모티콘 하나하나 속에"},
-      {"00:20.4": "달라지는 내 미묘한 심리를 알까 우"},
-      {"00:26.4": "아니 바쁘지 않아 Nothing no no"},
-      {"00:31.1": "잠들어 있지 않아 Insomnia nia nia"},
-      {"00:36.0": "지금 다른 사람과 함께이지 않아"},
-      {"00:40.0": "응 나도 너를 생각 중"},
-      {"00:44.6": "우리의 네모 칸은 Bloom"},
-      {"00:49.2": "엄지손가락으로 장미꽃을 피워"},
-      {"00:53.9": "향기에 취할 것 같아 우"},
-      {"00:58.4": "오직 둘만의 비밀의 정원"},
-      {"01:02.9": "I feel bloom I feel bloom I feel bloom"},
-      {"01:16.4": "너에게 한 송이를 더 보내"},
-      {"01:25.8": "밤샘 작업으로 업데이트"},
-      {"01:28.4": "흥미로운 이 작품의 지은이 That's me 우"},
-      {"01:34.8": "어쩜 이 관계의 클라이맥스"},
-      {"01:37.4": "2막으로 넘어가기엔 지금이 Good timing 우"},
-      {"01:43.7": "같은 맘인 걸 알아 Realize la lize"},
-      {"01:48.1": "말을 고르지 말아 Just reply la la ly"},
-      {"01:53.3": "조금 장난스러운 나의 은유에"},
-      {"01:57.1": "네 해석이 궁금해"},
-      {"02:01.8": "우리의 색은 Gray and blue"},
-      {"02:06.3": "엄지손가락으로 말풍선을 띄워"},
-      {"02:10.7": "금세 터질 것 같아 우"},
-      {"02:15.1": "호흡이 가빠져 어지러워"},
-      {"02:19.9": "I feel blue I feel blue I feel blue"},
-      {"02:33.4": "너에게 가득히 채워"},
-      {"02:37.7": "띄어쓰기없이보낼게사랑인것같애"},
-      {"02:42.4": "백만송이장미꽃을 나랑피워볼래?"},
-      {"02:46.8": "꽃잎의 색은 우리 마음 가는 대로 칠해"},
-      {"02:52.1": "시들 때도 예쁘게"},
-      {"02:56.2": "우리의 네모 칸은 Bloom"},
-      {"03:00.5": "엄지손가락으로 장미꽃을 피워"},
-      {"03:05.1": "향기에 취할 것 같아 우"},
-      {"03:09.7": "오직 둘만의 비밀의 정원"},
-      {"03:14.5": "I feel bloom I feel bloom I feel bloom"},
-      {"03:27.4": "너에게 한 송이를 더 보내"}
-    ];
-
-    for (var mun in txtduration) {
-      mun.forEach((key, value) {
-        var min = int.parse(key.split(":")[0]);
-        var sec = int.parse(key.split(":")[1].split(".")[0]) + (min * 60);
-        var mili =
-            (int.parse(key.split(":")[1].split(".")[1])) * 100 + (sec * 1000);
-
-        //print("min : $min, sec : $sec, mili : $mili");
-
-        Duration dur = Duration(milliseconds: mili);
-
-        returnlrc.add([dur, value]);
-      });
-    }
-    Duration du = returnlrc[returnlrc.length - 1][0];
-    returnlrc.add([du, ""]);
-    print(returnlrc[returnlrc.length - 1]);
-    return returnlrc;
-  }
-
-  List getvive() {
-    List stringvive = [
-      ['0.000', '0.529'],
-      ['0.830', '0.430'],
-      ['1.680', '0.052'],
-      ['2.450', '0.058'],
-      ['3.230', '0.744'],
-      ['4.050', '0.155'],
-      ['4.750', '0.091'],
-      ['5.500', '0.021'],
-      ['6.220', '0.875'],
-      ['6.890', '0.053'],
-      ['7.570', '0.116'],
-      ['8.250', '0.024'],
-      ['8.920', '0.866'],
-      ['9.590', '0.046'],
-      ['10.260', '0.125'],
-      ['10.940', '0.013'],
-      ['11.610', '0.877'],
-      ['12.280', '0.046'],
-      ['12.960', '0.099'],
-      ['13.640', '0.006'],
-      ['14.310', '0.918'],
-      ['14.980', '0.037'],
-      ['15.660', '0.072'],
-      ['16.340', '0.007'],
-      ['17.020', '0.908'],
-      ['17.680', '0.050'],
-      ['18.370', '0.061'],
-      ['19.040', '0.006'],
-      ['19.710', '0.930'],
-      ['20.380', '0.068'],
-      ['21.060', '0.007'],
-      ['21.740', '0.001'],
-      ['22.400', '0.943'],
-      ['23.080', '0.057'],
-      ['23.760', '0.003'],
-      ['24.430', '0.002'],
-      ['25.100', '0.874'],
-      ['25.780', '0.063'],
-      ['26.450', '0.017'],
-      ['27.120', '0.004'],
-      ['27.800', '0.809'],
-      ['28.470', '0.062'],
-      ['29.120', '0.028'],
-      ['29.820', '0.020'],
-      ['30.490', '0.800'],
-      ['31.160', '0.010'],
-      ['31.830', '0.026'],
-      ['32.520', '0.009'],
-      ['33.190', '0.954'],
-      ['33.860', '0.009'],
-      ['34.530', '0.034'],
-      ['35.220', '0.007'],
-      ['35.890', '0.969'],
-      ['36.560', '0.006'],
-      ['37.260', '0.006'],
-      ['37.940', '0.002'],
-      ['38.580', '0.981'],
-      ['39.260', '0.001'],
-      ['39.940', '0.003'],
-      ['40.610', '0.001'],
-      ['41.280', '0.993'],
-      ['41.950', '0.000'],
-      ['42.620', '0.001'],
-      ['43.300', '0.001'],
-      ['43.970', '0.999'],
-      ['44.650', '0.000'],
-      ['45.330', '0.000'],
-      ['46.000', '0.000'],
-      ['46.670', '1.000'],
-      ['47.350', '0.000'],
-      ['48.010', '0.000'],
-      ['48.690', '0.000'],
-      ['49.370', '1.000'],
-      ['50.040', '0.000'],
-      ['50.700', '0.000'],
-      ['51.390', '0.000'],
-      ['52.070', '1.000'],
-      ['52.740', '0.000'],
-      ['53.410', '0.000'],
-      ['54.090', '0.000'],
-      ['54.760', '1.000'],
-      ['55.440', '0.000'],
-      ['56.100', '0.000'],
-      ['56.780', '0.000'],
-      ['57.460', '1.000'],
-      ['58.130', '0.000'],
-      ['58.840', '0.001'],
-      ['59.520', '0.000'],
-      ['60.160', '1.000'],
-      ['60.810', '0.000'],
-      ['61.480', '0.001'],
-      ['62.180', '0.000'],
-      ['62.870', '1.000'],
-      ['63.530', '0.000'],
-      ['64.220', '0.001'],
-      ['64.880', '0.000'],
-      ['65.560', '1.000'],
-      ['66.230', '0.000'],
-      ['66.890', '0.005'],
-      ['67.580', '0.000'],
-      ['68.260', '1.000'],
-      ['68.910', '0.000'],
-      ['69.620', '0.000'],
-      ['70.270', '0.000'],
-      ['70.960', '1.000'],
-      ['71.660', '0.000'],
-      ['72.320', '0.000'],
-      ['72.980', '0.000'],
-      ['73.650', '1.000'],
-      ['74.330', '0.000'],
-      ['75.020', '0.000'],
-      ['75.660', '0.000'],
-      ['76.350', '1.000'],
-      ['77.050', '0.000'],
-      ['77.760', '0.001'],
-      ['78.410', '0.000'],
-      ['79.040', '1.000'],
-      ['79.720', '0.000'],
-      ['80.390', '0.001'],
-      ['81.070', '0.000'],
-      ['81.730', '1.000'],
-      ['82.400', '0.000'],
-      ['83.090', '0.000'],
-      ['83.750', '0.000'],
-      ['84.430', '1.000'],
-      ['85.100', '0.000'],
-      ['85.800', '0.000'],
-      ['86.450', '0.000'],
-      ['87.120', '1.000'],
-      ['87.790', '0.000'],
-      ['88.490', '0.001'],
-      ['89.140', '0.000'],
-      ['89.820', '1.000'],
-      ['90.490', '0.000'],
-      ['91.190', '0.000'],
-      ['91.840', '0.000'],
-      ['92.520', '1.000'],
-      ['93.190', '0.000'],
-      ['93.880', '0.001'],
-      ['94.530', '0.000'],
-      ['95.210', '1.000'],
-      ['95.880', '0.000'],
-      ['96.580', '0.002'],
-      ['97.230', '0.000'],
-      ['97.910', '0.999'],
-      ['98.580', '0.000'],
-      ['99.280', '0.011'],
-      ['99.930', '0.000'],
-      ['100.610', '0.998'],
-      ['101.260', '0.000'],
-      ['101.940', '0.019'],
-      ['102.610', '0.000'],
-      ['103.310', '0.999'],
-      ['103.980', '0.000'],
-      ['104.670', '0.009'],
-      ['105.330', '0.000'],
-      ['106.000', '0.999'],
-      ['106.670', '0.000'],
-      ['107.350', '0.002'],
-      ['108.020', '0.000'],
-      ['108.700', '1.000'],
-      ['109.370', '0.000'],
-      ['110.050', '0.001'],
-      ['110.720', '0.000'],
-      ['111.390', '1.000'],
-      ['112.060', '0.000'],
-      ['112.740', '0.000'],
-      ['113.410', '0.000'],
-      ['114.090', '1.000'],
-      ['114.770', '0.000'],
-      ['115.430', '0.001'],
-      ['116.110', '0.000'],
-      ['116.790', '1.000'],
-      ['117.460', '0.000'],
-      ['118.130', '0.003'],
-      ['118.800', '0.000'],
-      ['119.490', '1.000'],
-      ['120.160', '0.000'],
-      ['120.840', '0.010'],
-      ['121.510', '0.000'],
-      ['122.220', '1.000'],
-      ['122.890', '0.000'],
-      ['123.540', '0.007'],
-      ['124.210', '0.000'],
-      ['124.880', '1.000'],
-      ['125.550', '0.000'],
-      ['126.230', '0.001'],
-      ['126.900', '0.000'],
-      ['127.570', '1.000'],
-      ['128.250', '0.000'],
-      ['128.930', '0.000'],
-      ['129.590', '0.000'],
-      ['130.270', '1.000'],
-      ['130.940', '0.000'],
-      ['131.630', '0.000'],
-      ['132.290', '0.000'],
-      ['132.960', '1.000'],
-      ['133.640', '0.000'],
-      ['134.320', '0.000'],
-      ['134.990', '0.000'],
-      ['135.660', '1.000'],
-      ['136.340', '0.000'],
-      ['137.010', '0.000'],
-      ['137.680', '0.000'],
-      ['138.360', '1.000'],
-      ['139.030', '0.000'],
-      ['139.700', '0.000'],
-      ['140.380', '0.000'],
-      ['141.060', '1.000'],
-      ['141.730', '0.000'],
-      ['142.410', '0.001'],
-      ['143.080', '0.000'],
-      ['143.750', '1.000'],
-      ['144.420', '0.000'],
-      ['145.140', '0.000'],
-      ['145.810', '0.000'],
-      ['146.450', '1.000'],
-      ['147.120', '0.000'],
-      ['147.790', '0.000'],
-      ['148.470', '0.000'],
-      ['149.140', '1.000'],
-      ['149.820', '0.000'],
-      ['150.510', '0.001'],
-      ['151.160', '0.000'],
-      ['151.840', '1.000'],
-      ['152.510', '0.000'],
-      ['153.180', '0.001'],
-      ['153.860', '0.000'],
-      ['154.540', '1.000'],
-      ['155.210', '0.000'],
-      ['155.910', '0.000'],
-      ['156.560', '0.000'],
-      ['157.240', '1.000'],
-      ['157.910', '0.000'],
-      ['158.600', '0.000'],
-      ['159.250', '0.000'],
-      ['159.940', '1.000'],
-      ['160.600', '0.000'],
-      ['161.270', '0.000'],
-      ['161.950', '0.000'],
-      ['162.630', '1.000'],
-      ['163.300', '0.000'],
-      ['164.010', '0.001'],
-      ['164.650', '0.000'],
-      ['165.330', '1.000'],
-      ['166.010', '0.000'],
-      ['166.690', '0.001'],
-      ['167.360', '0.000'],
-      ['168.020', '1.000'],
-      ['168.690', '0.000'],
-      ['169.380', '0.001'],
-      ['170.040', '0.000'],
-      ['170.720', '1.000'],
-      ['171.390', '0.000'],
-      ['172.090', '0.001'],
-      ['172.740', '0.000'],
-      ['173.410', '1.000'],
-      ['174.090', '0.000'],
-      ['174.780', '0.002'],
-      ['175.430', '0.000'],
-      ['176.110', '1.000'],
-      ['176.780', '0.000'],
-      ['177.480', '0.001'],
-      ['178.130', '0.000'],
-      ['178.810', '1.000'],
-      ['179.480', '0.000'],
-      ['180.170', '0.001'],
-      ['180.830', '0.000'],
-      ['181.510', '1.000'],
-      ['182.180', '0.000'],
-      ['182.870', '0.002'],
-      ['183.520', '0.000'],
-      ['184.200', '1.000'],
-      ['184.870', '0.000'],
-      ['185.570', '0.004'],
-      ['186.220', '0.000'],
-      ['186.900', '1.000'],
-      ['187.560', '0.000'],
-      ['188.230', '0.005'],
-      ['188.890', '0.000'],
-      ['189.600', '1.000'],
-      ['190.250', '0.000'],
-      ['190.930', '0.005'],
-      ['191.640', '0.000'],
-      ['192.300', '1.000'],
-      ['192.960', '0.000'],
-      ['193.650', '0.009'],
-      ['194.350', '0.000'],
-      ['194.990', '0.999'],
-      ['195.650', '0.000'],
-      ['196.350', '0.016'],
-      ['196.990', '0.000'],
-      ['197.690', '0.997'],
-      ['198.390', '0.000'],
-      ['199.050', '0.020'],
-      ['199.730', '0.000'],
-      ['200.390', '0.998'],
-      ['201.080', '0.000'],
-      ['201.790', '0.027'],
-      ['202.470', '0.002'],
-      ['203.130', '0.996'],
-      ['203.780', '0.001'],
-      ['204.450', '0.013'],
-      ['205.060', '0.024'],
-      ['205.780', '0.985'],
-      ['206.420', '0.000'],
-      ['207.100', '0.011'],
-      ['207.820', '0.106'],
-      ['208.460', '0.821'],
-      ['209.160', '0.000'],
-      ['209.840', '0.004'],
-      ['210.510', '0.203'],
-      ['211.170', '0.810'],
-      ['211.840', '0.000'],
-      ['212.530', '0.003'],
-      ['213.190', '0.106'],
-      ['213.870', '0.833'],
-      ['214.540', '0.000'],
-      ['215.230', '0.001'],
-      ['215.880', '0.077'],
-      ['216.560', '0.854'],
-      ['217.230', '0.000'],
-      ['217.930', '0.001'],
-      ['218.580', '0.074'],
-      ['219.260', '0.863'],
-      ['219.930', '0.000'],
-      ['220.630', '0.001'],
-      ['221.280', '0.047'],
-      ['221.950', '0.873'],
-      ['222.630', '0.000'],
-      ['223.320', '0.001'],
-      ['223.970', '0.045'],
-      ['224.650', '0.883'],
-      ['225.320', '0.000'],
-      ['226.020', '0.001'],
-      ['226.670', '0.029'],
-      ['227.350', '0.890'],
-      ['228.020', '0.000'],
-      ['228.710', '0.001'],
-      ['229.370', '0.047'],
-      ['230.050', '0.914'],
-      ['230.720', '0.000'],
-      ['231.390', '0.002'],
-      ['232.070', '0.016'],
-      ['232.740', '0.938'],
-      ['233.410', '0.000'],
-      ['234.100', '0.001'],
-      ['234.760', '0.010'],
-      ['235.440', '0.970'],
-      ['236.110', '0.000'],
-      ['236.800', '0.001'],
-      ['237.460', '0.003'],
-      ['238.130', '0.969'],
-      ['238.800', '0.000'],
-      ['239.490', '0.002'],
-      ['240.150', '0.005'],
-      ['240.830', '0.971'],
-      ['241.500', '0.000'],
-      ['242.190', '0.003'],
-      ['242.850', '0.003'],
-      ['243.520', '0.956'],
-      ['244.200', '0.000'],
-      ['244.880', '0.002'],
-      ['245.550', '0.005'],
-      ['246.220', '0.979'],
-      ['246.890', '0.000'],
-      ['247.580', '0.004'],
-      ['248.240', '0.002'],
-      ['248.920', '0.979'],
-      ['249.590', '0.000'],
-      ['250.270', '0.014'],
-      ['250.940', '0.003'],
-      ['251.620', '0.985'],
-      ['252.330', '0.001'],
-      ['253.010', '0.063'],
-      ['253.700', '0.004'],
-      ['254.400', '0.951'],
-      ['255.090', '0.003'],
-      ['255.730', '0.127'],
-      ['256.350', '0.007'],
-      ['256.980', '0.944'],
-      ['257.620', '0.013'],
-      ['258.290', '0.129'],
-      ['258.900', '0.018'],
-    ];
-    List stringvive2 = [
-      ['0.06', '0.03'],
-      ['0.59', '0.54'],
-      ['1.13', '0.41'],
-      ['1.68', '0.00'],
-      ['2.22', '0.03'],
-      ['2.77', '0.57'],
-      ['3.31', '0.45'],
-      ['3.87', '0.00'],
-      ['4.41', '0.02'],
-      ['4.95', '0.53'],
-      ['5.49', '0.50'],
-      ['6.05', '0.00'],
-      ['6.59', '0.02'],
-      ['7.13', '0.51'],
-      ['7.68', '0.47'],
-      ['8.25', '0.00'],
-      ['8.79', '0.02'],
-      ['9.31', '0.48'],
-      ['9.86', '0.37'],
-      ['10.39', '0.10'],
-      ['10.95', '0.03'],
-      ['11.50', '0.41'],
-      ['12.04', '0.29'],
-      ['12.58', '0.20'],
-      ['13.13', '0.03'],
-      ['13.68', '0.39'],
-      ['14.22', '0.23'],
-      ['14.78', '0.24'],
-      ['15.32', '0.03'],
-      ['15.86', '0.42'],
-      ['16.41', '0.24'],
-      ['16.98', '0.25'],
-      ['17.50', '0.04'],
-      ['18.04', '0.42'],
-      ['18.59', '0.25'],
-      ['19.13', '0.25'],
-      ['19.68', '0.06'],
-      ['20.22', '0.33'],
-      ['20.77', '0.24'],
-      ['21.32', '0.19'],
-      ['21.86', '0.05'],
-      ['22.41', '0.35'],
-      ['22.95', '0.20'],
-      ['23.51', '0.19'],
-      ['24.04', '0.06'],
-      ['24.59', '0.36'],
-      ['25.13', '0.20'],
-      ['25.71', '0.20'],
-      ['26.25', '0.06'],
-      ['26.77', '0.38'],
-      ['27.31', '0.18'],
-      ['27.88', '0.18'],
-      ['28.41', '0.07'],
-      ['28.96', '0.40'],
-      ['29.50', '0.16'],
-      ['30.04', '0.17'],
-      ['30.59', '0.09'],
-      ['31.13', '0.43'],
-      ['31.68', '0.16'],
-      ['32.24', '0.12'],
-      ['32.77', '0.10'],
-      ['33.32', '0.43'],
-      ['33.86', '0.21'],
-      ['34.42', '0.15'],
-      ['34.96', '0.09'],
-      ['35.50', '0.34'],
-      ['36.04', '0.15'],
-      ['36.61', '0.22'],
-      ['37.13', '0.09'],
-      ['37.68', '0.31'],
-      ['38.22', '0.15'],
-      ['38.79', '0.28'],
-      ['39.32', '0.10'],
-      ['39.86', '0.29'],
-      ['40.41', '0.13'],
-      ['40.97', '0.35'],
-      ['41.50', '0.11'],
-      ['42.05', '0.22'],
-      ['42.60', '0.11'],
-      ['43.14', '0.45'],
-      ['43.68', '0.12'],
-      ['44.23', '0.18'],
-      ['44.77', '0.09'],
-      ['45.32', '0.47'],
-      ['45.86', '0.14'],
-      ['46.41', '0.18'],
-      ['46.95', '0.08'],
-      ['47.50', '0.49'],
-      ['48.04', '0.14'],
-      ['48.59', '0.17'],
-      ['49.13', '0.07'],
-      ['49.68', '0.49'],
-      ['50.22', '0.14'],
-      ['50.77', '0.17'],
-      ['51.31', '0.06'],
-      ['51.86', '0.50'],
-      ['52.41', '0.14'],
-      ['52.95', '0.17'],
-      ['53.50', '0.06'],
-      ['54.04', '0.50'],
-      ['54.59', '0.15'],
-      ['55.13', '0.18'],
-      ['55.68', '0.06'],
-      ['56.22', '0.50'],
-      ['56.77', '0.15'],
-      ['57.31', '0.18'],
-      ['57.86', '0.07'],
-      ['58.41', '0.50'],
-      ['58.95', '0.13'],
-      ['59.50', '0.19'],
-      ['60.04', '0.08'],
-      ['60.59', '0.50'],
-      ['61.14', '0.13'],
-      ['61.68', '0.22'],
-      ['62.22', '0.06'],
-      ['62.78', '0.50'],
-      ['63.31', '0.14'],
-      ['63.86', '0.22'],
-      ['64.41', '0.07'],
-      ['64.97', '0.49'],
-      ['65.50', '0.14'],
-      ['66.04', '0.23'],
-      ['66.59', '0.07'],
-      ['67.16', '0.49'],
-      ['67.68', '0.13'],
-      ['68.23', '0.24'],
-      ['68.77', '0.09'],
-      ['69.32', '0.46'],
-      ['69.86', '0.11'],
-      ['70.41', '0.29'],
-      ['70.95', '0.10'],
-      ['71.51', '0.44'],
-      ['72.04', '0.11'],
-      ['72.59', '0.27'],
-      ['73.13', '0.09'],
-      ['73.67', '0.44'],
-      ['74.22', '0.12'],
-      ['74.77', '0.26'],
-      ['75.31', '0.07'],
-      ['75.87', '0.45'],
-      ['76.40', '0.12'],
-      ['76.97', '0.24'],
-      ['77.55', '0.06'],
-      ['78.08', '0.48'],
-      ['78.62', '0.14'],
-      ['79.14', '0.24'],
-      ['79.70', '0.06'],
-      ['80.22', '0.49'],
-      ['80.78', '0.14'],
-      ['81.32', '0.22'],
-      ['81.85', '0.06'],
-      ['82.41', '0.50'],
-      ['82.95', '0.14'],
-      ['83.50', '0.23'],
-      ['84.05', '0.06'],
-      ['84.60', '0.50'],
-      ['85.14', '0.14'],
-      ['85.69', '0.22'],
-      ['86.23', '0.05'],
-      ['86.76', '0.50'],
-      ['87.30', '0.13'],
-      ['87.87', '0.26'],
-      ['88.41', '0.06'],
-      ['88.95', '0.48'],
-      ['89.50', '0.12'],
-      ['90.04', '0.29'],
-      ['90.59', '0.05'],
-      ['91.13', '0.49'],
-      ['91.68', '0.10'],
-      ['92.23', '0.31'],
-      ['92.77', '0.04'],
-      ['93.31', '0.50'],
-      ['93.86', '0.09'],
-      ['94.41', '0.30'],
-      ['94.95', '0.04'],
-      ['95.50', '0.50'],
-      ['96.04', '0.09'],
-      ['96.59', '0.31'],
-      ['97.13', '0.05'],
-      ['97.68', '0.51'],
-      ['98.22', '0.09'],
-      ['98.77', '0.29'],
-      ['99.31', '0.04'],
-      ['99.86', '0.52'],
-      ['100.41', '0.11'],
-      ['100.95', '0.28'],
-      ['101.50', '0.04'],
-      ['102.05', '0.52'],
-      ['102.59', '0.10'],
-      ['103.13', '0.23'],
-      ['103.68', '0.04'],
-      ['104.22', '0.50'],
-      ['104.77', '0.10'],
-      ['105.32', '0.19'],
-      ['105.86', '0.04'],
-      ['106.41', '0.53'],
-      ['106.95', '0.11'],
-      ['107.50', '0.17'],
-      ['108.04', '0.04'],
-      ['108.59', '0.51'],
-      ['109.13', '0.12'],
-      ['109.68', '0.17'],
-      ['110.22', '0.05'],
-      ['110.77', '0.51'],
-      ['111.32', '0.12'],
-      ['111.86', '0.16'],
-      ['112.41', '0.04'],
-      ['112.95', '0.54'],
-      ['113.50', '0.13'],
-      ['114.03', '0.15'],
-      ['114.59', '0.03'],
-      ['115.13', '0.55'],
-      ['115.68', '0.14'],
-      ['116.22', '0.15'],
-      ['116.77', '0.03'],
-      ['117.32', '0.54'],
-      ['117.86', '0.14'],
-      ['118.41', '0.15'],
-      ['118.95', '0.04'],
-      ['119.49', '0.53'],
-      ['120.04', '0.14'],
-      ['120.59', '0.15'],
-      ['121.13', '0.04'],
-      ['121.68', '0.53'],
-      ['122.23', '0.14'],
-      ['122.78', '0.16'],
-      ['123.32', '0.02'],
-      ['123.86', '0.52'],
-      ['124.41', '0.15'],
-      ['124.95', '0.16'],
-      ['125.50', '0.02'],
-      ['126.04', '0.53'],
-      ['126.59', '0.13'],
-      ['127.14', '0.16'],
-      ['127.68', '0.03'],
-      ['128.22', '0.53'],
-      ['128.77', '0.11'],
-      ['129.32', '0.16'],
-      ['129.86', '0.05'],
-      ['130.41', '0.54'],
-      ['130.95', '0.08'],
-      ['131.50', '0.17'],
-      ['132.04', '0.05'],
-      ['132.59', '0.53'],
-      ['133.13', '0.06'],
-      ['133.68', '0.17'],
-      ['134.23', '0.06'],
-      ['134.77', '0.53'],
-      ['135.31', '0.06'],
-      ['135.86', '0.17'],
-      ['136.41', '0.06'],
-      ['136.95', '0.52'],
-      ['137.50', '0.05'],
-      ['138.04', '0.17'],
-      ['138.59', '0.06'],
-      ['139.14', '0.53'],
-      ['139.68', '0.05'],
-      ['140.23', '0.17'],
-      ['140.77', '0.07'],
-      ['141.32', '0.55'],
-      ['141.86', '0.03'],
-      ['142.41', '0.17'],
-      ['142.95', '0.07'],
-      ['143.50', '0.54'],
-      ['144.04', '0.04'],
-      ['144.59', '0.17'],
-      ['145.13', '0.06'],
-      ['145.68', '0.54'],
-      ['146.22', '0.04'],
-      ['146.77', '0.18'],
-      ['147.32', '0.07'],
-      ['147.86', '0.55'],
-      ['148.41', '0.02'],
-      ['148.95', '0.18'],
-      ['149.50', '0.07'],
-      ['150.06', '0.55'],
-      ['150.60', '0.05'],
-      ['151.12', '0.18'],
-      ['151.68', '0.05'],
-      ['152.22', '0.54'],
-      ['152.77', '0.07'],
-      ['153.31', '0.16'],
-      ['153.86', '0.05'],
-      ['154.40', '0.55'],
-      ['154.94', '0.09'],
-      ['155.49', '0.14'],
-      ['156.04', '0.03'],
-      ['156.59', '0.56'],
-      ['157.13', '0.12'],
-      ['157.68', '0.12'],
-      ['158.22', '0.03'],
-      ['158.77', '0.55'],
-      ['159.32', '0.15'],
-      ['159.86', '0.13'],
-      ['160.41', '0.03'],
-      ['160.95', '0.56'],
-      ['161.50', '0.13'],
-      ['162.04', '0.15'],
-      ['162.59', '0.04'],
-      ['163.13', '0.56'],
-      ['163.68', '0.11'],
-      ['164.23', '0.16'],
-      ['164.77', '0.04'],
-      ['165.32', '0.55'],
-      ['165.86', '0.11'],
-      ['166.41', '0.15'],
-      ['166.95', '0.04'],
-      ['167.50', '0.53'],
-      ['168.04', '0.10'],
-      ['168.59', '0.16'],
-      ['169.13', '0.05'],
-      ['169.68', '0.52'],
-      ['170.22', '0.10'],
-      ['170.77', '0.17'],
-      ['171.31', '0.06'],
-      ['171.86', '0.51'],
-      ['172.41', '0.09'],
-      ['172.95', '0.16'],
-      ['173.50', '0.05'],
-      ['174.05', '0.49'],
-      ['174.59', '0.10'],
-      ['175.13', '0.19'],
-      ['175.68', '0.05'],
-      ['176.23', '0.51'],
-      ['176.77', '0.09'],
-      ['177.32', '0.18'],
-      ['177.86', '0.06'],
-      ['178.41', '0.54'],
-      ['178.95', '0.09'],
-      ['179.50', '0.17'],
-      ['180.04', '0.07'],
-      ['180.59', '0.57'],
-      ['181.13', '0.09'],
-      ['181.68', '0.15'],
-      ['182.23', '0.08'],
-      ['182.77', '0.57'],
-      ['183.32', '0.09'],
-      ['183.86', '0.19'],
-      ['184.41', '0.08'],
-      ['184.95', '0.57'],
-      ['185.50', '0.09'],
-      ['186.04', '0.22'],
-      ['186.59', '0.08'],
-      ['187.13', '0.58'],
-      ['187.68', '0.09'],
-      ['188.23', '0.22'],
-      ['188.77', '0.08'],
-      ['189.32', '0.58'],
-      ['189.86', '0.08'],
-      ['190.41', '0.23'],
-      ['190.95', '0.08'],
-      ['191.50', '0.58'],
-      ['192.05', '0.08'],
-      ['192.59', '0.24'],
-      ['193.13', '0.08'],
-      ['193.68', '0.59'],
-      ['194.22', '0.07'],
-      ['194.77', '0.21'],
-      ['195.32', '0.09'],
-      ['195.86', '0.61'],
-      ['196.41', '0.07'],
-      ['196.95', '0.19'],
-      ['197.50', '0.09'],
-      ['198.04', '0.59'],
-      ['198.59', '0.07'],
-      ['199.13', '0.21'],
-      ['199.68', '0.11'],
-      ['200.22', '0.59'],
-      ['200.79', '0.06'],
-      ['201.33', '0.25'],
-      ['201.89', '0.11'],
-      ['202.44', '0.43'],
-      ['202.96', '0.14'],
-      ['203.51', '0.35'],
-      ['204.06', '0.18'],
-    ];
-    List stringvive3 = [
-      ['0.38', '0.09'],
-      ['0.81', '0.03'],
-      ['1.23', '0.11'],
-      ['1.66', '0.77'],
-      ['2.10', '0.10'],
-      ['2.53', '0.01'],
-      ['2.95', '0.10'],
-      ['3.39', '0.79'],
-      ['3.82', '0.11'],
-      ['4.23', '0.00'],
-      ['4.66', '0.09'],
-      ['5.04', '0.80'],
-      ['5.39', '0.13'],
-      ['5.76', '0.00'],
-      ['6.13', '0.07'],
-      ['6.49', '0.82'],
-      ['6.86', '0.09'],
-      ['7.21', '0.00'],
-      ['7.59', '0.03'],
-      ['7.95', '0.85'],
-      ['8.32', '0.04'],
-      ['8.68', '0.00'],
-      ['9.06', '0.01'],
-      ['9.41', '0.87'],
-      ['9.76', '0.02'],
-      ['10.15', '0.00'],
-      ['10.52', '0.00'],
-      ['10.88', '0.85'],
-      ['11.24', '0.05'],
-      ['11.61', '0.00'],
-      ['11.98', '0.01'],
-      ['12.34', '0.84'],
-      ['12.69', '0.05'],
-      ['13.06', '0.00'],
-      ['13.44', '0.01'],
-      ['13.81', '0.84'],
-      ['14.17', '0.05'],
-      ['14.53', '0.00'],
-      ['14.91', '0.10'],
-      ['15.29', '0.75'],
-      ['15.64', '0.06'],
-      ['16.01', '0.00'],
-      ['16.37', '0.07'],
-      ['16.73', '0.73'],
-      ['17.10', '0.02'],
-      ['17.46', '0.00'],
-      ['17.83', '0.22'],
-      ['18.19', '0.73'],
-      ['18.54', '0.03'],
-      ['18.91', '0.00'],
-      ['19.29', '0.26'],
-      ['19.66', '0.69'],
-      ['20.04', '0.02'],
-      ['20.39', '0.00'],
-      ['20.76', '0.27'],
-      ['21.12', '0.55'],
-      ['21.48', '0.02'],
-      ['21.83', '0.00'],
-      ['22.22', '0.38'],
-      ['22.59', '0.43'],
-      ['22.94', '0.02'],
-      ['23.31', '0.00'],
-      ['23.68', '0.43'],
-      ['24.05', '0.32'],
-      ['24.40', '0.02'],
-      ['24.76', '0.00'],
-      ['25.15', '0.49'],
-      ['25.51', '0.30'],
-      ['25.87', '0.02'],
-      ['26.26', '0.00'],
-      ['26.61', '0.48'],
-      ['26.98', '0.21'],
-      ['27.36', '0.05'],
-      ['27.71', '0.00'],
-      ['28.07', '0.50'],
-      ['28.44', '0.22'],
-      ['28.80', '0.04'],
-      ['29.17', '0.00'],
-      ['29.54', '0.50'],
-      ['29.90', '0.19'],
-      ['30.27', '0.05'],
-      ['30.63', '0.00'],
-      ['31.00', '0.51'],
-      ['31.37', '0.19'],
-      ['31.73', '0.04'],
-      ['32.08', '0.00'],
-      ['32.46', '0.52'],
-      ['32.83', '0.19'],
-      ['33.17', '0.07'],
-      ['33.54', '0.00'],
-      ['33.93', '0.52'],
-      ['34.29', '0.19'],
-      ['34.66', '0.07'],
-      ['35.03', '0.00'],
-      ['35.39', '0.53'],
-      ['35.76', '0.20'],
-      ['36.12', '0.05'],
-      ['36.47', '0.00'],
-      ['36.85', '0.54'],
-      ['37.22', '0.21'],
-      ['37.57', '0.05'],
-      ['37.94', '0.00'],
-      ['38.32', '0.55'],
-      ['38.69', '0.23'],
-      ['39.05', '0.03'],
-      ['39.41', '0.00'],
-      ['39.78', '0.55'],
-      ['40.15', '0.27'],
-      ['40.51', '0.03'],
-      ['40.87', '0.00'],
-      ['41.24', '0.50'],
-      ['41.61', '0.28'],
-      ['41.98', '0.05'],
-      ['42.34', '0.00'],
-      ['42.71', '0.47'],
-      ['43.07', '0.27'],
-      ['43.43', '0.03'],
-      ['43.79', '0.00'],
-      ['44.17', '0.46'],
-      ['44.54', '0.25'],
-      ['44.90', '0.04'],
-      ['45.26', '0.00'],
-      ['45.63', '0.48'],
-      ['46.00', '0.25'],
-      ['46.36', '0.03'],
-      ['46.71', '0.00'],
-      ['47.10', '0.49'],
-      ['47.46', '0.25'],
-      ['47.83', '0.03'],
-      ['48.19', '0.00'],
-      ['48.56', '0.51'],
-      ['48.93', '0.23'],
-      ['49.29', '0.02'],
-      ['49.64', '0.00'],
-      ['50.02', '0.52'],
-      ['50.39', '0.23'],
-      ['50.75', '0.02'],
-      ['51.12', '0.00'],
-      ['51.49', '0.52'],
-      ['51.85', '0.23'],
-      ['52.22', '0.03'],
-      ['52.59', '0.00'],
-      ['52.95', '0.53'],
-      ['53.32', '0.21'],
-      ['53.69', '0.03'],
-      ['54.05', '0.00'],
-      ['54.42', '0.52'],
-      ['54.78', '0.25'],
-      ['55.15', '0.02'],
-      ['55.51', '0.00'],
-      ['55.88', '0.52'],
-      ['56.25', '0.27'],
-      ['56.61', '0.01'],
-      ['56.98', '0.00'],
-      ['57.34', '0.52'],
-      ['57.71', '0.28'],
-      ['58.07', '0.01'],
-      ['58.44', '0.00'],
-      ['58.81', '0.52'],
-      ['59.17', '0.29'],
-      ['59.54', '0.01'],
-      ['59.90', '0.00'],
-      ['60.27', '0.51'],
-      ['60.64', '0.29'],
-      ['61.00', '0.01'],
-      ['61.37', '0.00'],
-      ['61.73', '0.50'],
-      ['62.10', '0.29'],
-      ['62.46', '0.01'],
-      ['62.83', '0.00'],
-      ['63.19', '0.50'],
-      ['63.54', '0.32'],
-      ['63.91', '0.00'],
-      ['64.28', '0.00'],
-      ['64.65', '0.50'],
-      ['65.02', '0.30'],
-      ['65.39', '0.01'],
-      ['65.74', '0.00'],
-      ['66.12', '0.50'],
-      ['66.49', '0.29'],
-      ['66.85', '0.01'],
-      ['67.22', '0.00'],
-      ['67.59', '0.50'],
-      ['67.97', '0.28'],
-      ['68.31', '0.01'],
-      ['68.67', '0.00'],
-      ['69.05', '0.50'],
-      ['69.42', '0.28'],
-      ['69.78', '0.01'],
-      ['70.14', '0.00'],
-      ['70.52', '0.50'],
-      ['70.88', '0.27'],
-      ['71.24', '0.01'],
-      ['71.59', '0.00'],
-      ['71.98', '0.50'],
-      ['72.34', '0.27'],
-      ['72.71', '0.01'],
-      ['73.06', '0.00'],
-      ['73.44', '0.50'],
-      ['73.80', '0.25'],
-      ['74.17', '0.03'],
-      ['74.54', '0.00'],
-      ['74.92', '0.50'],
-      ['75.27', '0.24'],
-      ['75.63', '0.01'],
-      ['75.99', '0.00'],
-      ['76.37', '0.50'],
-      ['76.73', '0.25'],
-      ['77.10', '0.01'],
-      ['77.46', '0.00'],
-      ['77.83', '0.50'],
-      ['78.20', '0.27'],
-      ['78.56', '0.02'],
-      ['78.92', '0.00'],
-      ['79.29', '0.49'],
-      ['79.66', '0.26'],
-      ['80.02', '0.02'],
-      ['80.39', '0.00'],
-      ['80.76', '0.48'],
-      ['81.12', '0.26'],
-      ['81.49', '0.02'],
-      ['81.85', '0.00'],
-      ['82.22', '0.49'],
-      ['82.59', '0.25'],
-      ['82.95', '0.01'],
-      ['83.32', '0.00'],
-      ['83.68', '0.49'],
-      ['84.05', '0.25'],
-      ['84.41', '0.01'],
-      ['84.77', '0.00'],
-      ['85.15', '0.50'],
-      ['85.51', '0.23'],
-      ['85.88', '0.02'],
-      ['86.24', '0.00'],
-      ['86.61', '0.50'],
-      ['86.98', '0.24'],
-      ['87.34', '0.02'],
-      ['87.70', '0.00'],
-      ['88.07', '0.50'],
-      ['88.44', '0.23'],
-      ['88.81', '0.02'],
-      ['89.17', '0.00'],
-      ['89.54', '0.50'],
-      ['89.90', '0.23'],
-      ['90.27', '0.02'],
-      ['90.62', '0.00'],
-      ['91.00', '0.50'],
-      ['91.37', '0.23'],
-      ['91.73', '0.02'],
-      ['92.09', '0.00'],
-      ['92.46', '0.50'],
-      ['92.83', '0.26'],
-      ['93.20', '0.02'],
-      ['93.54', '0.00'],
-      ['93.93', '0.50'],
-      ['94.29', '0.25'],
-      ['94.66', '0.02'],
-      ['95.03', '0.00'],
-      ['95.39', '0.50'],
-      ['95.76', '0.26'],
-      ['96.12', '0.01'],
-      ['96.46', '0.00'],
-      ['96.85', '0.50'],
-      ['97.22', '0.25'],
-      ['97.59', '0.03'],
-      ['97.95', '0.00'],
-      ['98.32', '0.50'],
-      ['98.69', '0.28'],
-      ['99.06', '0.04'],
-      ['99.43', '0.00'],
-      ['99.81', '0.50'],
-      ['100.18', '0.28'],
-      ['100.53', '0.04'],
-      ['100.90', '0.00'],
-      ['101.27', '0.50'],
-      ['101.64', '0.28'],
-      ['102.00', '0.04'],
-      ['102.37', '0.00'],
-      ['102.73', '0.50'],
-      ['103.10', '0.23'],
-      ['103.45', '0.06'],
-      ['103.82', '0.00'],
-      ['104.17', '0.50'],
-      ['104.54', '0.24'],
-      ['104.90', '0.05'],
-      ['105.25', '0.00'],
-      ['105.63', '0.50'],
-      ['106.00', '0.24'],
-      ['106.36', '0.05'],
-      ['106.73', '0.00'],
-      ['107.09', '0.50'],
-      ['107.46', '0.24'],
-      ['107.83', '0.06'],
-      ['108.18', '0.00'],
-      ['108.56', '0.50'],
-      ['108.93', '0.23'],
-      ['109.29', '0.07'],
-      ['109.64', '0.00'],
-      ['110.02', '0.50'],
-      ['110.39', '0.22'],
-      ['110.75', '0.08'],
-      ['111.12', '0.00'],
-      ['111.49', '0.50'],
-      ['111.85', '0.22'],
-      ['112.22', '0.09'],
-      ['112.57', '0.00'],
-      ['112.95', '0.50'],
-      ['113.32', '0.21'],
-      ['113.68', '0.10'],
-      ['114.05', '0.00'],
-      ['114.41', '0.50'],
-      ['114.78', '0.20'],
-      ['115.15', '0.11'],
-      ['115.51', '0.00'],
-      ['115.88', '0.50'],
-      ['116.24', '0.22'],
-      ['116.61', '0.11'],
-      ['116.98', '0.00'],
-      ['117.34', '0.50'],
-      ['117.71', '0.23'],
-      ['118.07', '0.11'],
-      ['118.44', '0.00'],
-      ['118.81', '0.50'],
-      ['119.17', '0.29'],
-      ['119.54', '0.06'],
-      ['119.90', '0.00'],
-      ['120.27', '0.50'],
-      ['120.64', '0.28'],
-      ['121.00', '0.07'],
-      ['121.37', '0.00'],
-      ['121.73', '0.50'],
-      ['122.10', '0.29'],
-      ['122.46', '0.06'],
-      ['122.83', '0.00'],
-      ['123.20', '0.50'],
-      ['123.56', '0.29'],
-      ['123.93', '0.03'],
-      ['124.29', '0.00'],
-      ['124.66', '0.50'],
-      ['125.03', '0.29'],
-      ['125.39', '0.02'],
-      ['125.76', '0.00'],
-      ['126.12', '0.50'],
-      ['126.49', '0.29'],
-      ['126.86', '0.01'],
-      ['127.22', '0.00'],
-      ['127.58', '0.50'],
-      ['127.94', '0.31'],
-      ['128.31', '0.01'],
-      ['128.67', '0.00'],
-      ['129.05', '0.50'],
-      ['129.43', '0.30'],
-      ['129.79', '0.02'],
-      ['130.14', '0.00'],
-      ['130.51', '0.50'],
-      ['130.88', '0.30'],
-      ['131.24', '0.01'],
-      ['131.60', '0.00'],
-      ['131.98', '0.50'],
-      ['132.34', '0.26'],
-      ['132.70', '0.02'],
-      ['133.06', '0.00'],
-      ['133.44', '0.50'],
-      ['133.81', '0.27'],
-      ['134.17', '0.02'],
-      ['134.53', '0.00'],
-      ['134.90', '0.50'],
-      ['135.27', '0.26'],
-      ['135.63', '0.03'],
-      ['135.99', '0.00'],
-      ['136.37', '0.50'],
-      ['136.73', '0.27'],
-      ['137.10', '0.03'],
-      ['137.45', '0.00'],
-      ['137.83', '0.49'],
-      ['138.20', '0.23'],
-      ['138.55', '0.06'],
-      ['138.94', '0.00'],
-      ['139.31', '0.50'],
-      ['139.66', '0.21'],
-      ['140.02', '0.03'],
-      ['140.37', '0.00'],
-      ['140.76', '0.49'],
-      ['141.12', '0.23'],
-      ['141.48', '0.03'],
-      ['141.85', '0.00'],
-      ['142.22', '0.48'],
-      ['142.59', '0.24'],
-      ['142.95', '0.05'],
-      ['143.31', '0.00'],
-      ['143.68', '0.47'],
-      ['144.05', '0.25'],
-      ['144.41', '0.05'],
-      ['144.77', '0.00'],
-      ['145.15', '0.47'],
-      ['145.51', '0.25'],
-      ['145.88', '0.05'],
-      ['146.23', '0.00'],
-      ['146.61', '0.47'],
-      ['146.98', '0.26'],
-      ['147.34', '0.05'],
-      ['147.71', '0.01'],
-      ['148.07', '0.46'],
-      ['148.44', '0.26'],
-      ['148.80', '0.05'],
-      ['149.16', '0.00'],
-      ['149.54', '0.47'],
-      ['149.90', '0.24'],
-      ['150.25', '0.06'],
-      ['150.61', '0.01'],
-      ['151.00', '0.47'],
-      ['151.37', '0.23'],
-      ['151.73', '0.05'],
-      ['152.09', '0.01'],
-      ['152.46', '0.45'],
-      ['152.83', '0.24'],
-      ['153.19', '0.04'],
-      ['153.55', '0.01'],
-      ['153.92', '0.47'],
-      ['154.29', '0.25'],
-      ['154.65', '0.03'],
-      ['155.02', '0.01'],
-      ['155.39', '0.47'],
-      ['155.76', '0.25'],
-      ['156.12', '0.03'],
-      ['156.49', '0.00'],
-      ['156.85', '0.48'],
-      ['157.22', '0.29'],
-      ['157.58', '0.02'],
-      ['157.94', '0.00'],
-      ['158.32', '0.48'],
-      ['158.68', '0.30'],
-      ['159.05', '0.02'],
-      ['159.41', '0.00'],
-      ['159.78', '0.47'],
-      ['160.15', '0.31'],
-      ['160.51', '0.01'],
-      ['160.86', '0.00'],
-      ['161.24', '0.43'],
-      ['161.61', '0.32'],
-      ['161.98', '0.01'],
-      ['162.35', '0.00'],
-      ['162.71', '0.39'],
-      ['163.08', '0.39'],
-      ['163.46', '0.01'],
-      ['163.86', '0.00'],
-      ['164.24', '0.28'],
-      ['164.62', '0.51'],
-      ['164.98', '0.01'],
-      ['165.38', '0.00'],
-      ['165.74', '0.06'],
-      ['166.13', '0.72'],
-      ['166.50', '0.01'],
-      ['166.90', '0.00'],
-      ['167.26', '0.04'],
-      ['167.66', '0.70'],
-      ['168.04', '0.06'],
-      ['168.44', '0.02'],
-      ['168.84', '0.04'],
-      ['169.26', '0.64'],
-      ['169.65', '0.07'],
-      ['170.04', '0.01'],
-      ['170.43', '0.03'],
-      ['170.80', '0.69'],
-      ['171.17', '0.09'],
-      ['171.53', '0.02'],
-      ['171.92', '0.03'],
-      ['172.26', '0.64'],
-      ['172.60', '0.06'],
-      ['172.97', '0.10'],
-      ['173.32', '0.02'],
-      ['173.67', '0.62'],
-      ['174.02', '0.02'],
-      ['174.38', '0.17'],
-      ['174.74', '0.02'],
-      ['175.13', '0.45'],
-      ['175.50', '0.01'],
-      ['175.86', '0.29'],
-      ['176.22', '0.01'],
-      ['176.59', '0.43'],
-      ['176.96', '0.00'],
-      ['177.34', '0.36'],
-      ['177.71', '0.01'],
-      ['178.07', '0.28'],
-      ['178.43', '0.03'],
-      ['178.81', '0.42'],
-      ['179.16', '0.01'],
-      ['179.52', '0.19'],
-      ['179.88', '0.01'],
-      ['180.25', '0.45'],
-      ['180.63', '0.01'],
-      ['180.99', '0.12'],
-      ['181.35', '0.01'],
-      ['181.72', '0.41'],
-      ['182.10', '0.01'],
-      ['182.46', '0.13'],
-      ['182.82', '0.02'],
-      ['183.19', '0.42'],
-      ['183.56', '0.01'],
-      ['183.93', '0.14'],
-      ['184.29', '0.03'],
-      ['184.66', '0.42'],
-      ['185.03', '0.04'],
-      ['185.39', '0.16'],
-      ['185.75', '0.04'],
-      ['186.12', '0.43'],
-      ['186.49', '0.06'],
-      ['186.85', '0.15'],
-      ['187.19', '0.02'],
-      ['187.58', '0.41'],
-      ['187.95', '0.06'],
-      ['188.32', '0.16'],
-      ['188.68', '0.03'],
-      ['189.05', '0.39'],
-      ['189.42', '0.09'],
-      ['189.78', '0.16'],
-      ['190.15', '0.02'],
-      ['190.51', '0.38'],
-      ['190.87', '0.09'],
-      ['191.24', '0.17'],
-      ['191.60', '0.02'],
-      ['191.96', '0.43'],
-      ['192.34', '0.12'],
-      ['192.71', '0.20'],
-      ['193.07', '0.03'],
-      ['193.44', '0.45'],
-      ['193.81', '0.10'],
-      ['194.18', '0.26'],
-      ['194.56', '0.03'],
-      ['194.94', '0.45'],
-      ['195.28', '0.15'],
-      ['195.64', '0.29'],
-      ['196.00', '0.04'],
-      ['196.37', '0.41'],
-      ['196.74', '0.14'],
-      ['197.12', '0.31'],
-      ['197.49', '0.03'],
-      ['197.86', '0.40'],
-      ['198.20', '0.16'],
-      ['198.57', '0.34'],
-      ['198.92', '0.03'],
-      ['199.28', '0.35'],
-      ['199.67', '0.13'],
-      ['200.04', '0.35'],
-      ['200.41', '0.02'],
-      ['200.76', '0.36'],
-      ['201.13', '0.23'],
-      ['201.48', '0.35'],
-      ['201.86', '0.02'],
-      ['202.22', '0.40'],
-      ['202.59', '0.20'],
-      ['202.95', '0.36'],
-      ['203.32', '0.02'],
-      ['203.70', '0.39'],
-      ['204.05', '0.17'],
-      ['204.41', '0.36'],
-      ['204.76', '0.02'],
-      ['205.15', '0.43'],
-      ['205.51', '0.15'],
-      ['205.88', '0.37'],
-      ['206.24', '0.02'],
-      ['206.61', '0.45'],
-      ['206.97', '0.10'],
-      ['207.34', '0.37'],
-      ['207.69', '0.01'],
-      ['208.07', '0.50'],
-      ['208.44', '0.09'],
-      ['208.81', '0.40'],
-      ['209.17', '0.01'],
-      ['209.54', '0.52'],
-      ['209.90', '0.08'],
-      ['210.26', '0.39'],
-      ['210.62', '0.01'],
-      ['211.00', '0.55'],
-      ['211.37', '0.03'],
-      ['211.73', '0.39'],
-      ['212.09', '0.01'],
-      ['212.46', '0.57'],
-      ['212.83', '0.02'],
-      ['213.19', '0.37'],
-      ['213.55', '0.00'],
-      ['213.93', '0.55'],
-      ['214.29', '0.05'],
-      ['214.66', '0.38'],
-      ['215.02', '0.00'],
-      ['215.39', '0.58'],
-      ['215.78', '0.05'],
-      ['216.13', '0.40'],
-      ['216.52', '0.01'],
-      ['216.87', '0.59'],
-      ['217.25', '0.04'],
-      ['217.61', '0.44'],
-      ['217.95', '0.02'],
-      ['218.30', '0.53'],
-      ['218.62', '0.10'],
-      ['218.94', '0.38'],
-      ['219.25', '0.06'],
-      ['219.57', '0.47']
-    ];
-    List stringvive4 = [
-      ['0.01', '0.55'],
-      ['0.45', '0.01'],
-      ['0.90', '0.35'],
-      ['1.34', '0.08'],
-      ['1.78', '0.54'],
-      ['2.23', '0.00'],
-      ['2.67', '0.35'],
-      ['3.12', '0.08'],
-      ['3.56', '0.60'],
-      ['4.01', '0.00'],
-      ['4.45', '0.39'],
-      ['4.90', '0.08'],
-      ['5.34', '0.59'],
-      ['5.78', '0.00'],
-      ['6.23', '0.39'],
-      ['6.67', '0.08'],
-      ['7.12', '0.64'],
-      ['7.56', '0.00'],
-      ['8.01', '0.33'],
-      ['8.45', '0.08'],
-      ['8.89', '0.63'],
-      ['9.34', '0.00'],
-      ['9.78', '0.34'],
-      ['10.23', '0.09'],
-      ['10.67', '0.69'],
-      ['11.12', '0.00'],
-      ['11.56', '0.25'],
-      ['12.01', '0.09'],
-      ['12.45', '0.67'],
-      ['12.89', '0.00'],
-      ['13.34', '0.29'],
-      ['13.78', '0.09'],
-      ['14.23', '0.75'],
-      ['14.67', '0.00'],
-      ['15.12', '0.17'],
-      ['15.56', '0.09'],
-      ['16.01', '0.79'],
-      ['16.45', '0.00'],
-      ['16.90', '0.13'],
-      ['17.34', '0.09'],
-      ['17.78', '0.85'],
-      ['18.23', '0.00'],
-      ['18.67', '0.07'],
-      ['19.12', '0.09'],
-      ['19.56', '0.86'],
-      ['20.01', '0.00'],
-      ['20.45', '0.07'],
-      ['20.89', '0.09'],
-      ['21.34', '0.87'],
-      ['21.77', '0.00'],
-      ['22.23', '0.05'],
-      ['22.67', '0.09'],
-      ['23.11', '0.85'],
-      ['23.55', '0.00'],
-      ['24.01', '0.07'],
-      ['24.45', '0.10'],
-      ['24.90', '0.83'],
-      ['25.34', '0.00'],
-      ['25.78', '0.06'],
-      ['26.23', '0.10'],
-      ['26.67', '0.79'],
-      ['27.12', '0.00'],
-      ['27.56', '0.08'],
-      ['28.01', '0.10'],
-      ['28.45', '0.77'],
-      ['28.90', '0.00'],
-      ['29.34', '0.08'],
-      ['29.78', '0.09'],
-      ['30.23', '0.76'],
-      ['30.67', '0.00'],
-      ['31.12', '0.09'],
-      ['31.56', '0.09'],
-      ['32.01', '0.75'],
-      ['32.45', '0.00'],
-      ['32.90', '0.09'],
-      ['33.34', '0.09'],
-      ['33.79', '0.76'],
-      ['34.23', '0.00'],
-      ['34.67', '0.09'],
-      ['35.12', '0.09'],
-      ['35.56', '0.76'],
-      ['36.01', '0.00'],
-      ['36.45', '0.07'],
-      ['36.90', '0.09'],
-      ['37.34', '0.76'],
-      ['37.79', '0.00'],
-      ['38.23', '0.09'],
-      ['38.67', '0.09'],
-      ['39.12', '0.76'],
-      ['39.56', '0.00'],
-      ['40.01', '0.06'],
-      ['40.45', '0.08'],
-      ['40.89', '0.79'],
-      ['41.31', '0.00'],
-      ['41.76', '0.01'],
-      ['42.20', '0.08'],
-      ['42.67', '0.83'],
-      ['43.12', '0.00'],
-      ['43.56', '0.01'],
-      ['44.01', '0.08'],
-      ['44.45', '0.83'],
-      ['44.90', '0.00'],
-      ['45.34', '0.01'],
-      ['45.78', '0.08'],
-      ['46.23', '0.82'],
-      ['46.67', '0.00'],
-      ['47.12', '0.01'],
-      ['47.56', '0.08'],
-      ['48.01', '0.82'],
-      ['48.45', '0.00'],
-      ['48.90', '0.01'],
-      ['49.34', '0.08'],
-      ['49.78', '0.80'],
-      ['50.23', '0.01'],
-      ['50.67', '0.01'],
-      ['51.12', '0.08'],
-      ['51.56', '0.81'],
-      ['52.01', '0.01'],
-      ['52.45', '0.01'],
-      ['52.90', '0.09'],
-      ['53.34', '0.80'],
-      ['53.78', '0.01'],
-      ['54.23', '0.01'],
-      ['54.67', '0.09'],
-      ['55.12', '0.78'],
-      ['55.56', '0.01'],
-      ['55.98', '0.01'],
-      ['56.44', '0.10'],
-      ['56.88', '0.76'],
-      ['57.30', '0.01'],
-      ['57.75', '0.02'],
-      ['58.18', '0.18'],
-      ['58.64', '0.64'],
-      ['59.06', '0.00'],
-      ['59.52', '0.03'],
-      ['59.98', '0.10'],
-      ['60.45', '0.66'],
-      ['60.90', '0.00'],
-      ['61.34', '0.09'],
-      ['61.78', '0.10'],
-      ['62.23', '0.67'],
-      ['62.67', '0.00'],
-      ['63.12', '0.18'],
-      ['63.56', '0.10'],
-      ['64.01', '0.66'],
-      ['64.45', '0.00'],
-      ['64.90', '0.22'],
-      ['65.34', '0.10'],
-      ['65.78', '0.62'],
-      ['66.23', '0.00'],
-      ['66.67', '0.23'],
-      ['67.12', '0.09'],
-      ['67.56', '0.56'],
-      ['68.01', '0.00'],
-      ['68.45', '0.24'],
-      ['68.90', '0.09'],
-      ['69.34', '0.50'],
-      ['69.78', '0.00'],
-      ['70.23', '0.21'],
-      ['70.67', '0.09'],
-      ['71.12', '0.50'],
-      ['71.56', '0.00'],
-      ['72.01', '0.11'],
-      ['72.45', '0.10'],
-      ['72.90', '0.44'],
-      ['73.34', '0.00'],
-      ['73.78', '0.01'],
-      ['74.23', '0.23'],
-      ['74.67', '0.43'],
-      ['75.12', '0.00'],
-      ['75.54', '0.00'],
-      ['76.01', '0.35'],
-      ['76.45', '0.42'],
-      ['76.90', '0.01'],
-      ['77.33', '0.00'],
-      ['77.79', '0.53'],
-      ['78.21', '0.34'],
-      ['78.68', '0.03'],
-      ['79.11', '0.01'],
-      ['79.57', '0.55'],
-      ['80.02', '0.34'],
-      ['80.45', '0.07'],
-      ['80.89', '0.01'],
-      ['81.34', '0.57'],
-      ['81.78', '0.35'],
-      ['82.23', '0.07'],
-      ['82.67', '0.01'],
-      ['83.12', '0.54'],
-      ['83.56', '0.37'],
-      ['84.01', '0.12'],
-      ['84.45', '0.00'],
-      ['84.90', '0.46'],
-      ['85.34', '0.41'],
-      ['85.79', '0.01'],
-      ['86.23', '0.00'],
-      ['86.68', '0.39'],
-      ['87.11', '0.42'],
-      ['87.57', '0.00'],
-      ['88.01', '0.00'],
-      ['88.46', '0.18'],
-      ['88.90', '0.61'],
-      ['89.34', '0.00'],
-      ['89.78', '0.00'],
-      ['90.23', '0.15'],
-      ['90.67', '0.72'],
-      ['91.12', '0.00'],
-      ['91.56', '0.01'],
-      ['92.01', '0.11'],
-      ['92.45', '0.78'],
-      ['92.90', '0.00'],
-      ['93.34', '0.01'],
-      ['93.78', '0.10'],
-      ['94.23', '0.84'],
-      ['94.67', '0.00'],
-      ['95.12', '0.02'],
-      ['95.56', '0.10'],
-      ['96.01', '0.86'],
-      ['96.45', '0.00'],
-      ['96.89', '0.01'],
-      ['97.34', '0.09'],
-      ['97.78', '0.85'],
-      ['98.23', '0.00'],
-      ['98.67', '0.05'],
-      ['99.12', '0.09'],
-      ['99.57', '0.84'],
-      ['100.01', '0.00'],
-      ['100.45', '0.02'],
-      ['100.90', '0.09'],
-      ['101.34', '0.85'],
-      ['101.79', '0.00'],
-      ['102.21', '0.00'],
-      ['102.65', '0.09'],
-      ['103.12', '0.87'],
-      ['103.56', '0.00'],
-      ['104.01', '0.00'],
-      ['104.45', '0.09'],
-      ['104.90', '0.87'],
-      ['105.34', '0.00'],
-      ['105.78', '0.00'],
-      ['106.23', '0.09'],
-      ['106.67', '0.86'],
-      ['107.12', '0.00'],
-      ['107.56', '0.00'],
-      ['108.01', '0.09'],
-      ['108.45', '0.86'],
-      ['108.90', '0.00'],
-      ['109.34', '0.00'],
-      ['109.78', '0.09'],
-      ['110.23', '0.85'],
-      ['110.67', '0.00'],
-      ['111.12', '0.00'],
-      ['111.56', '0.09'],
-      ['112.01', '0.84'],
-      ['112.45', '0.00'],
-      ['112.89', '0.01'],
-      ['113.34', '0.09'],
-      ['113.79', '0.80'],
-      ['114.23', '0.00'],
-      ['114.67', '0.01'],
-      ['115.12', '0.10'],
-      ['115.56', '0.73'],
-      ['116.00', '0.01'],
-      ['116.42', '0.03'],
-      ['116.88', '0.17'],
-      ['117.31', '0.74'],
-      ['117.74', '0.00'],
-      ['118.19', '0.07'],
-      ['118.63', '0.21'],
-      ['119.08', '0.66'],
-      ['119.50', '0.00'],
-      ['119.96', '0.06'],
-      ['120.42', '0.10'],
-      ['120.90', '0.65'],
-      ['121.34', '0.01'],
-      ['121.78', '0.13'],
-      ['122.23', '0.10'],
-      ['122.67', '0.67'],
-      ['123.12', '0.00'],
-      ['123.56', '0.20'],
-      ['124.01', '0.09'],
-      ['124.45', '0.65'],
-      ['124.90', '0.00'],
-      ['125.34', '0.22'],
-      ['125.79', '0.09'],
-      ['126.23', '0.60'],
-      ['126.67', '0.00'],
-      ['127.12', '0.28'],
-      ['127.56', '0.09'],
-      ['128.01', '0.56'],
-      ['128.45', '0.00'],
-      ['128.90', '0.30'],
-      ['129.34', '0.09'],
-      ['129.78', '0.54'],
-      ['130.23', '0.00'],
-      ['130.67', '0.30'],
-      ['131.12', '0.09'],
-      ['131.56', '0.56'],
-      ['132.01', '0.00'],
-      ['132.45', '0.24'],
-      ['132.90', '0.09'],
-      ['133.34', '0.57'],
-      ['133.79', '0.00'],
-      ['134.23', '0.26'],
-      ['134.67', '0.09'],
-      ['135.12', '0.59'],
-      ['135.56', '0.00'],
-      ['136.01', '0.27'],
-      ['136.45', '0.09'],
-      ['136.90', '0.55'],
-      ['137.34', '0.00'],
-      ['137.79', '0.28'],
-      ['138.23', '0.09'],
-      ['138.67', '0.53'],
-      ['139.12', '0.00'],
-      ['139.56', '0.29'],
-      ['140.01', '0.09'],
-      ['140.45', '0.49'],
-      ['140.90', '0.00'],
-      ['141.34', '0.34'],
-      ['141.79', '0.09'],
-      ['142.23', '0.46'],
-      ['142.67', '0.00'],
-      ['143.12', '0.36'],
-      ['143.56', '0.09'],
-      ['144.01', '0.44'],
-      ['144.45', '0.00'],
-      ['144.90', '0.35'],
-      ['145.34', '0.09'],
-      ['145.79', '0.47'],
-      ['146.23', '0.00'],
-      ['146.68', '0.32'],
-      ['147.12', '0.09'],
-      ['147.56', '0.48'],
-      ['148.01', '0.00'],
-      ['148.45', '0.36'],
-      ['148.89', '0.09'],
-      ['149.33', '0.48'],
-      ['149.77', '0.00'],
-      ['150.19', '0.23'],
-      ['150.63', '0.12'],
-      ['151.12', '0.74'],
-      ['151.62', '0.00'],
-      ['152.12', '0.03'],
-      ['152.62', '0.18'],
-      ['153.12', '0.61'],
-      ['153.62', '0.00'],
-      ['154.12', '0.02'],
-      ['154.62', '0.28'],
-      ['155.12', '0.63'],
-      ['155.62', '0.00'],
-      ['156.12', '0.02'],
-      ['156.62', '0.27'],
-      ['157.12', '0.65'],
-      ['157.62', '0.00'],
-      ['158.12', '0.05'],
-      ['158.63', '0.24'],
-      ['159.12', '0.68'],
-      ['159.62', '0.00'],
-      ['160.12', '0.03'],
-      ['160.62', '0.23'],
-      ['161.12', '0.70'],
-      ['161.62', '0.02'],
-      ['162.12', '0.05'],
-      ['162.62', '0.15'],
-      ['163.12', '0.76'],
-      ['163.62', '0.02'],
-      ['164.12', '0.05'],
-      ['164.62', '0.18'],
-      ['165.12', '0.73'],
-      ['165.60', '0.02'],
-      ['166.11', '0.08'],
-      ['166.63', '0.11'],
-      ['167.12', '0.72'],
-      ['167.63', '0.02'],
-      ['168.12', '0.06'],
-      ['168.62', '0.12'],
-      ['169.12', '0.67'],
-      ['169.62', '0.00'],
-      ['170.12', '0.13'],
-      ['170.62', '0.09'],
-      ['171.12', '0.66'],
-      ['171.67', '0.00'],
-      ['172.17', '0.17'],
-      ['172.73', '0.11'],
-      ['173.25', '0.66'],
-      ['173.72', '0.00'],
-      ['174.19', '0.11'],
-      ['174.65', '0.10'],
-      ['175.12', '0.65'],
-      ['175.62', '0.00'],
-      ['176.12', '0.16'],
-      ['176.62', '0.14'],
-      ['177.12', '0.61'],
-      ['177.62', '0.00'],
-      ['178.12', '0.19'],
-      ['178.61', '0.17'],
-      ['179.12', '0.62'],
-      ['179.62', '0.00'],
-      ['180.12', '0.18'],
-      ['180.62', '0.17'],
-      ['181.12', '0.63'],
-      ['181.62', '0.00'],
-      ['182.12', '0.17'],
-      ['182.61', '0.21'],
-      ['183.12', '0.59'],
-      ['183.62', '0.00'],
-      ['184.12', '0.14'],
-      ['184.62', '0.27'],
-      ['185.12', '0.52'],
-      ['185.62', '0.00'],
-      ['186.12', '0.14'],
-      ['186.60', '0.28'],
-      ['187.12', '0.62'],
-      ['187.62', '0.00'],
-      ['188.12', '0.15'],
-      ['188.62', '0.34'],
-      ['189.12', '0.55'],
-      ['189.62', '0.00'],
-      ['190.12', '0.15'],
-      ['190.60', '0.47'],
-      ['191.09', '0.41'],
-      ['191.55', '0.04'],
-      ['192.03', '0.23'],
-      ['192.51', '0.37'],
-      ['193.01', '0.38'],
-      ['193.49', '0.15']
-    ];
-    List returnvive = [];
-    //var tempsec = int.parse(stringvive4[0][3].split(".")[0]);
-    //var tempmili =
-    //(int.parse(stringvive4[0][3].split(".")[1])) * 10 + (tempsec * 1000);
-    //stringvive4.removeRange(0, 4);
-
-    for (var mun in stringvive4) {
-      var sec = int.parse(mun[0].split(".")[0]);
-      var mili = (int.parse(mun[0].split(".")[1])) * 10 + (sec * 1000);
-
-      //print("sec : $sec, mili : $mili");
-      var viv = double.parse(mun[1]);
-
-      Duration dur = Duration(milliseconds: mili);
-
-      returnvive.add([dur, viv]);
-    }
-
-    return returnvive;
   }
 }

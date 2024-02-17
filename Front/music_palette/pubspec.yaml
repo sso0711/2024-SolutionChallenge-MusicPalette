@@ -42,6 +42,17 @@ dependencies:
   path_provider: ^2.1.2
   flutter_screenutil: ^5.9.0
   google_sign_in: ^6.2.1
+  text_scroll: ^0.2.0
+  scrollable_positioned_list: ^0.3.8
+  firebase_auth: ^4.17.4
+  firebase_core: ^2.25.4
+  image_gallery_saver: ^2.0.3
+  permission_handler: ^11.3.0
+  dio: ^5.4.0
+  cached_network_image: ^3.3.1
+  flutter_native_splash: ^2.3.10
+  flutter_launcher_icons: ^0.13.1
+  device_info_plus: ^9.1.2
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +64,18 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/image/splashtitle3.png
+  android_12:
+    image: assets/image/splashtitle4.png
+    icon_background_color: "#ffffff"
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/image/icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

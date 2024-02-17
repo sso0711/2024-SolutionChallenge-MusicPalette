@@ -1,8 +1,15 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:music_palette/all_music_page.dart';
+import 'package:music_palette/api_sevice.dart';
+import 'package:music_palette/like_musics_page.dart';
 import 'package:music_palette/login_service.dart';
 import 'package:music_palette/music_data.dart';
 import 'package:music_palette/musicpage.dart';
 import 'package:music_palette/mypage.dart';
+import 'package:text_scroll/text_scroll.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,70 +19,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<MyMusic> testdata = [
-    MyMusic(
-        id: 1,
-        title: "05 Bad Liar",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 2,
-        title: "bad guy",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 3,
-        title: "Blueming",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 4,
-        title: "Don't Call Me",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 5,
-        title: "dreams",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 6, title: "hey", encodedtitle: "encoded_title", artist: "artist"),
-    MyMusic(
-        id: 7,
-        title: "LOVE ME RIGHT",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 8,
-        title: "onrepeat",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 9,
-        title: "Blueming",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 10,
-        title: "Blueming",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 11,
-        title: "Blueming",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 12,
-        title: "Blueming",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-    MyMusic(
-        id: 13,
-        title: "Blueming",
-        encodedtitle: "encoded_title",
-        artist: "artist"),
-  ];
+  Future<List<MyMusic>> allMusics = ApiService.getAllMusics();
 
   MusicUser user = MusicUser();
   //LoginService user = LoginService();
@@ -88,80 +32,23 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Theme.of(context).primaryColorLight,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: ListView(
-            children: [
-              user.isLogin
-                  ? profile(context)
-                  : Container(
-                      padding: const EdgeInsets.all(20),
-                      height: 100,
-                      color: Colors.black45,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await user.signInWithGoogle();
-                          setState(() {});
-                        },
-                        icon: const Icon(
-                          Icons.login_outlined,
-                          size: 18,
-                          color: Colors.white60,
-                        ),
-                        label: const Text(
-                          "로그인이 필요합니다.",
-                          style: TextStyle(color: Colors.white60),
-                        ),
-                      ),
-                    ),
-              const SizedBox(
-                height: 10,
-              ),
-              const Divider(),
-              ButtonBar(
-                alignment: MainAxisAlignment.start,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (BuildContext context) {
-                            return Mypage(
-                              user: user,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      "My Page",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          child: user.isLogin ? menuList(context) : logInButton(),
         ),
       ),
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColor,
-        leadingWidth: 10,
         leading: const Icon(
           Icons.music_note,
-          color: Colors.amber,
+          color: Colors.white,
         ),
         title: const Text(
-          "연진",
+          "Music Palette",
           style: TextStyle(
-            color: Colors.amberAccent,
+            color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: false,
       ),
       body: Container(
         padding: const EdgeInsets.all(20),
@@ -176,35 +63,183 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "추천 노래",
-                style: TextStyle(
-                  fontSize: 40,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+          child: !user.isLogin
+              ? logInButton()
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "추천 노래",
+                      style: TextStyle(
+                        fontSize: 40,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    FutureBuilder(
+                      future: allMusics,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Expanded(
+                            child: makeMusicList(snapshot),
+                          );
+                        } else {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              Expanded(
-                child: ListView.separated(
-                  scrollDirection: Axis.vertical,
-                  itemCount: 10,
-                  itemBuilder: (context, index) {
-                    return Music(music: testdata[index]);
-                  },
-                  separatorBuilder: (context, index) => const SizedBox(
-                    height: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
+      ),
+    );
+  }
+
+  ListView menuList(BuildContext context) {
+    return ListView(
+      children: [
+        profile(context),
+        const SizedBox(
+          height: 10,
+        ),
+        const Divider(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (BuildContext context) {
+                      return Mypage(
+                        user: user,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: const Text(
+                "My Page",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (BuildContext context) {
+                      return AllMusicPage(
+                        allMusics: allMusics,
+                        user: user,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: const Text(
+                "전체 노래",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (BuildContext context) {
+                      return LikeMusicPage(allMusics: allMusics, user: user);
+                    },
+                  ),
+                );
+              },
+              child: const Text(
+                "내가 찜한 노래",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget logInButton() {
+    return ListView(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            color: Colors.black54,
+            height: 100,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                await user.signInWithGoogle();
+
+                //print("3");
+
+                setState(() {
+                  //setAllLike();
+                });
+              },
+              icon: const Icon(
+                Icons.login_outlined,
+                size: 18,
+                color: Colors.white60,
+              ),
+              label: const Text(
+                "로그인이 필요합니다.",
+                style: TextStyle(color: Colors.white60),
+              ),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  ListView makeMusicList(AsyncSnapshot<List<MyMusic>> snapshots) {
+    for (int i = 0; i < snapshots.data!.length; i++) {
+      snapshots.data![i].like = user.likeList[i + 1];
+    }
+    List randomIndex = [];
+    List snapshot = [];
+    while (true) {
+      var i = Random().nextInt(snapshots.data!.length);
+      if (!randomIndex.contains(i)) {
+        randomIndex.add(i);
+        snapshot.add(snapshots.data![i]);
+      }
+      if (randomIndex.length >= 10) break;
+    }
+
+    return ListView.separated(
+      scrollDirection: Axis.vertical,
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return Music(
+          music: snapshot[index],
+          user: user,
+        );
+      },
+      separatorBuilder: (context, index) => const SizedBox(
+        height: 2,
       ),
     );
   }
@@ -275,10 +310,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class Music extends StatelessWidget {
   final MyMusic music;
+  MusicUser user;
 
-  const Music({
+  Music({
     super.key,
     required this.music,
+    required this.user,
   });
 
   @override
@@ -290,8 +327,8 @@ class Music extends StatelessWidget {
             fullscreenDialog: true,
             builder: (BuildContext context) {
               return MusicPage(
-                name: music.title,
-                singer: music.artist,
+                music: music,
+                user: user,
               );
             },
           ),
@@ -306,7 +343,9 @@ class Music extends StatelessWidget {
               child: Container(
                 height: 60,
                 width: 60,
-                color: Colors.amber,
+                color: Colors.white,
+                child: Image.network(ApiService.getCoverImageString(
+                    encodedtitle: music.encodedtitle)),
               ),
             ),
             const SizedBox(
@@ -315,12 +354,17 @@ class Music extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  music.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: TextScroll(
+                    music.title,
+                    delayBefore: const Duration(seconds: 2),
+                    pauseBetween: const Duration(seconds: 2),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 Text(
