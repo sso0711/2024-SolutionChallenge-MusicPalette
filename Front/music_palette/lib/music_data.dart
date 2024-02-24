@@ -1,13 +1,29 @@
+import 'dart:ffi';
+
 class MyMusic {
-  String name;
-  String singer;
+  int id;
+  String title;
+  String encodedtitle;
+  String artist;
+  String imageEx;
   late List<Map<Duration, String>> lrc;
+  late List<Map<Duration, Float>> vibrations;
   bool like = false;
 
   MyMusic({
-    required this.name,
-    required this.singer,
+    required this.id,
+    required this.title,
+    required this.encodedtitle,
+    required this.artist,
+    required this.imageEx,
   });
+
+  MyMusic.fromJson(Map<String, dynamic> json)
+      : id = json["song_id"],
+        title = json["title"],
+        encodedtitle = json["encoded_title"],
+        artist = json["artist"],
+        imageEx = json["image_explain"];
 }
 
 class Testapi {
