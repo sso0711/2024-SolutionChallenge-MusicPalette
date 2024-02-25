@@ -1,9 +1,13 @@
 # Music Palette
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/17644f0d-488a-4604-a863-19bb43746800" width="300" height="300">
+
+Music Palette - GDSC Solution Challenge 2024
+
 
 ## Table of Contents
 - [Member](#member)
 - [About Our Solution](#about-our-solution)
-- [Target SDGs](#target-SDGs)
+- [Target SDGs](#target-sdgs)
 - [Technical Components](#technical-components)
 - [App Demo](#app-demo)
     - [Main Page](#main-page)
