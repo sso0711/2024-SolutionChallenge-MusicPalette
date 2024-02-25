@@ -7,7 +7,7 @@
 - [Technical Components](#technical-components)
 - [App Demo](#app-demo)
     - [Main Page](#main-page)
-    - [Vibrations & Image created based on lyrics and melody](#vibrations-image)
+    - [Vibrations and Image created based on lyrics and melody](#vibrations-and-image-created-based-on-lyrics-and-melody)
     - [Real-time lyrics](#real-time-lyrics)
     - [My Favorites](#my-favorites)
     - [View All Songs](#view-all-songs)
@@ -48,7 +48,7 @@
 
 When user first install Music Palette and log in, user can see 10 recommended songs.
 
-### Vibrations & Image created based on lyrics and melody
+### Vibrations and Image created based on lyrics and melody
 ---
 <div align="center">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a0f9b40c-15bb-4829-9f67-807a9f733235" width="350" height="650">
