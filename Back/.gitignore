@@ -1,0 +1,12 @@
+.idea/*
+node_modules/*
+package-lock.json
+log/*
+.DS_Store
+assets/coverimages/*
+assets/madeimages/*
+assets/musics/*
+assets/lyrics/*
+assets/madmom
+config/*
+assets/__pyache__/*
