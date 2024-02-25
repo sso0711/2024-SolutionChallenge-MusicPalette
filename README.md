@@ -7,20 +7,20 @@
 - [Technical Components](#technical-components)
 - [Download APK](#download-apk)
 
-## Member <a id="member"></a>
+## Member <a name="member"></a>
 |WOOSEO JUNG|YEONJIN JOO|SOYOUNG PARK|DOHYEOK KWON|
 |:---:|:---:|:---:|:--:|
 |- Frontend|- Backend|- Backend|- AI|
 
-## About Our Solution <a id="about-our-solution"></a>
+## About Our Solution <a name="about-our-solution"></a>
 > Music Palette offers a multisensory experience by providing music not only audibly but also visually and tactilely, especially for those who have hearing impairments. It generates vibrations in sync with the music beats, displays images created based on lyrics and melody, and also provides features like real-time lyrics and playlist creation.
 
-## Target SDGs <a id="target-SDGs"></a>
+## Target SDGs <a name="target-SDGs"></a>
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/eb7770ce-d508-4288-97fd-a1427245ac65" width="150" height="150">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/039c7e91-8981-451a-ad15-6e25d85bab15" width="150" height="150">
 
 
-## 🛠️Technical Components <a id="technical-components"></a>
+## 🛠️Technical Components <a name="technical-components"></a>
 **✔️Frond-end**<br>
 <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=Flutter&logoColor=black">
 
@@ -33,7 +33,7 @@
 **✔️ML/DL**<br>
 <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white"><img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=Flask&logoColor=white"><img src="https://img.shields.io/badge/Google Gemini-8E75B2?style=for-the-badge&logo=Google Gemini&logoColor=black">
 
-## Download APK <a id="download-apk"></a>
+## Download APK <a name="download-apk"></a>
 https://drive.google.com/file/d/1GypC4jsM3hcfrNIFFO8bnktqWn3nqq_O/view?usp=share_link
 
 Please click link to download apk file.
