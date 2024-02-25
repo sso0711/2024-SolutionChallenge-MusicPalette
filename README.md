@@ -55,7 +55,7 @@ When user first install Music Palette and log in, user can see 10 recommended so
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/378a9d12-203b-4dd4-ba0d-6f9dd06d1f79" width="350" height="650">
 </div>
 
-If user chooses music, user can feel vibrations synced with music beat. Also, user can see image created based on lyrics and melody. If user touches the image, user can see image explanations which help user gain deeper insights into the generated images, ultimately aiding in a better understanding of the music..
+If user chooses and plays music, user can feel vibrations synced with music beat. Also, user can see image created based on lyrics and melody. If user touches the image, user can see image explanations which help user gain deeper insights into the generated images, ultimately aiding in a better understanding of the music..
 
 ### Real-time lyrics
 ---
