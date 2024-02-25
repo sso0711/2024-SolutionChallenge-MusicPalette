@@ -175,36 +175,46 @@ for(let i = 0; i < mp3Files.length; i++){
 
 exports.postInitializeStore = async function(){
     try{
-        const mp3Directory = './assets/musics';
-        const mp3Files = await fs.promises.readdir(mp3Directory);
-        const mp3FilePath = mp3Files.map(file => path.join(mp3Directory, file));
-
-        const lrcDirectory = './assets/lyrics';
-        const lrcFiles = await fs.promises.readdir(lrcDirectory);
-        const lrcFilePath = lrcFiles.map(file => path.join(lrcDirectory, file));
-
-        // send list of files to client
-        const encodedTitle = mp3Files.map(file => {
-          const lastIndex = file.lastIndexOf('.');
-          return encodeURI(file.substring(0, lastIndex));
-        });
-
         const db = admin.database();
+        const isDBMusicExist = await userDao.checkDBMusicExist(db);
 
-        for(let i = 0; i < mp3Files.length; i++){
-            const metadata = await mm.parseFile(mp3FilePath[i], { duration: true });
-
-            const vibrations = await vibrationToJSON(mp3FilePath[i]);
-    
-            // Common metadata (artist, title, album, etc.)
-            const commonMetadata = metadata.common;
-            const lyrics = await lrcToJson(lrcFilePath[i]);
-
-            const postInitializeStoreParams = [commonMetadata.title, encodedTitle[i], commonMetadata.artist, lyrics, vibrations];
-
-            await userDao.postInitializeStore(db, postInitializeStoreParams);
+        // check db music is already initialized
+        if(isDBMusicExist == null){
+          const mp3Directory = './assets/musics';
+          const mp3Files = await fs.promises.readdir(mp3Directory);
+          const mp3FilePath = mp3Files.map(file => path.join(mp3Directory, file));
+  
+          const lrcDirectory = './assets/lyrics';
+          const lrcFiles = await fs.promises.readdir(lrcDirectory);
+          const lrcFilePath = lrcFiles.map(file => path.join(lrcDirectory, file));
+  
+          // send list of files to client
+          const encodedTitle = mp3Files.map(file => {
+            const lastIndex = file.lastIndexOf('.');
+            return encodeURI(file.substring(0, lastIndex));
+          });
+  
+  
+          for(let i = 0; i < mp3Files.length; i++){
+              const metadata = await mm.parseFile(mp3FilePath[i], { duration: true });
+  
+              console.log(i+1);
+              const vibrations = await vibrationToJSON(mp3FilePath[i]);
+      
+              // Common metadata (artist, title, album, etc.)
+              const commonMetadata = metadata.common;
+              const lyrics = await lrcToJson(lrcFilePath[i]);
+  
+              const postInitializeStoreParams = [commonMetadata.title, encodedTitle[i], commonMetadata.artist, lyrics, vibrations];
+  
+              await userDao.postInitializeStore(db, postInitializeStoreParams);
+              console.log('store end');
+          }
+          return response(baseResponse.SUCCESS);
         }
-        return response(baseResponse.SUCCESS);
+        else{
+          return response(baseResponse.DB_ALREADY_INITIALIZED);
+        }
     }catch(error){
       logger.error(`App - userService postInitializeServer error\n: ${error.message}`);
       return errResponse(baseResponse.DB_ERROR);

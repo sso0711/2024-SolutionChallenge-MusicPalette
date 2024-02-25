@@ -25,25 +25,26 @@ async function postInitializeMade(db, musicId, imageExplain){
     );
 }
 
-async function postInitializeStore(db, postInitializeStoreParams){
-    const isDBFullref = db.ref('Musics');
-    let isDBFull = (await isDBFullref.once('value')).val();
+async function checkDBMusicExist(db){
+    const isDBMusicExistref = db.ref('Musics');
+    let isDBMusicExist = (await isDBMusicExistref.once('value')).val();
 
-    // it means db is empty
-    if(isDBFull == null){
-        const musicId = await increaseMusicId(db) + '';
-        const ref = db.ref('Musics/' + musicId);
+    return isDBMusicExist;
+}
+
+async function postInitializeStore(db, postInitializeStoreParams){
+    const musicId = await increaseMusicId(db) + '';
+    const ref = db.ref('Musics/' + musicId);
     
-        await ref.set(
-            {
-                title: postInitializeStoreParams[0],
-                encoded_title: postInitializeStoreParams[1],
-                artist: postInitializeStoreParams[2],
-                lyrics: postInitializeStoreParams[3],
-                vibrations: postInitializeStoreParams[4]
-            }
-        );
-    }
+    await ref.set(
+        {
+            title: postInitializeStoreParams[0],
+            encoded_title: postInitializeStoreParams[1],
+            artist: postInitializeStoreParams[2],
+            lyrics: postInitializeStoreParams[3],
+            vibrations: postInitializeStoreParams[4]
+        }
+    );
 
 }
 
@@ -141,5 +142,6 @@ module.exports ={
     getMusicInfo,
     getUserLikes,
     postUserLike,
+    checkDBMusicExist,
     deleteUserLike
 };
