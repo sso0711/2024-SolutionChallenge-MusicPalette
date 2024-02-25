@@ -62,16 +62,6 @@ async function validateFirebaseIdToken(idToken){
 
  /**
   * API No. 2
-  * API Name : Initialize - Get made image from ML Server API
-  * [POST] /initialize-made
-  */
- exports.postInitializeMade = async function(req, res){
-    const response = await userService.postInitializeMade();
-    return res.send(response);
- }
-
- /**
-  * API No. 3
   * API Name : Initialize - Store Music info API
   * [POST] /initialize-store
   */
@@ -81,11 +71,22 @@ async function validateFirebaseIdToken(idToken){
  };
 
  /**
+  * API No. 3
+  * API Name : Initialize - Get made image from ML Server API
+  * [POST] /initialize-made
+  */
+ exports.postInitializeMade = async function(req, res){
+  const response = await userService.postInitializeMade();
+  return res.send(response);
+}
+
+ /**
   * API No. 4
   * API Name : Get musics list API
   * [GET] /musics
   */
  exports.getMusicList = async function(req, res){
+  console.log('get request came');
     const musicList = await userProvider.getMusicList();
     return res.send(musicList);
  };

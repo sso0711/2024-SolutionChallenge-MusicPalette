@@ -30,6 +30,7 @@ exports.getMusicInfo = async function(musicId){
 
 exports.getUserLikes = async function(userId){
     try{
+        console.log('like came');
         const db = admin.database();
         const userLikes = await userDao.getUserLikes(db, userId);
     

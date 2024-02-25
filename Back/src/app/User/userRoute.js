@@ -15,11 +15,11 @@ module.exports = function(app){
      // 1. initialize - lrc & coverimages API
      app.post('/initialize-parse', user.postInitializeParse);
 
-     // 2. initialize - get madeimages from ML Server API
-     app.post('/initialize-made', user.postInitializeMade);
-
-     // 3. initialize - store musics info in db API 
+     // 2. initialize - store musics info in db API 
      app.post('/initialize-store', user.postInitializeStore);
+
+     // 3. initialize - get madeimages from ML Server API
+     app.post('/initialize-made', user.postInitializeMade);
 
      // 4. get all musics list API
      app.get('/musics', user.getMusicList);

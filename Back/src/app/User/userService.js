@@ -125,10 +125,10 @@ exports.postInitializeMade = async function(){
   try{
     const db = admin.database();
     // ML Server endpoint
-    const apiUrl = 'https://b981-59-5-249-117.ngrok-free.app';
+    const apiUrl = 'https://2b6a-116-44-106-196.ngrok-free.app';
 
     const mp3Files = await fs.promises.readdir('./assets/musics');
-for(let i = 0; i < mp3Files.length; i++){
+    for(let i = 0; i < mp3Files.length; i++){
       console.log(mp3Files[i]);
     }
     const encodedTitle = mp3Files.map(file => {
@@ -144,18 +144,18 @@ for(let i = 0; i < mp3Files.length; i++){
         lyrics: lrcToString('./assets/lyrics/' + decodeURI(encodedTitle[i])+'.lrc')
       }
 
-      console.log('http://music-palette.shop/musics/mp3-file/' +encodedTitle[i] +'.mp3');
-      console.log(lrcToString('./assets/lyrics/' + decodeURI(encodedTitle[i])+'.lrc'))
+      // console.log('http://music-palette.shop/musics/mp3-file/' +encodedTitle[i] +'.mp3');
+      // console.log(lrcToString('./assets/lyrics/' + decodeURI(encodedTitle[i])+'.lrc'));
       axios.post(apiUrl, requestData)
       .then(async response => {
         // get information from JSON data 
         const imageLink = response.data.url;
         console.log(imageLink);
+        console.log(decodeURI(encodedTitle[i]));
         const imageExplain = response.data.text;
         console.log(imageExplain);
 
         await downloadAndSaveImage(imageLink, './assets/madeimages/' + decodeURI(encodedTitle[i])+'.jpg');
-        // (i+1)
         await userDao.postInitializeMade(db, (i+1), imageExplain);
       })
       .catch(error => {
