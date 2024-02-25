@@ -23,7 +23,7 @@ Music Palette - GDSC Solution Challenge 2024
 |- Frontend|- Backend|- Backend|- AI|
 
 ## About Our Solution
-> Music Palette offers a multisensory experience by providing music not only audibly but also visually and tactilely, especially for those who have hearing impairments. It generates vibrations in sync with the music beats, displays images created based on lyrics and melody, and also provides features like real-time lyrics and playlist creation.
+Music Palette offers a multisensory experience by providing music not only audibly but also visually and tactilely, especially for those who have hearing impairments. It generates vibrations in sync with the music beats, displays images created based on lyrics and melody, and also provides features like real-time lyrics and playlist creation.
 
 ## Target SDGs
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/eb7770ce-d508-4288-97fd-a1427245ac65" width="150" height="150">
