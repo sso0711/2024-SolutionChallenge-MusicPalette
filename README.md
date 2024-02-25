@@ -34,7 +34,7 @@
 <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white"><img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=Flask&logoColor=white"><img src="https://img.shields.io/badge/Google Gemini-8E75B2?style=for-the-badge&logo=Google Gemini&logoColor=black">
 
 ## Download APK
-https://drive.google.com/file/d/1GypC4jsM3hcfrNIFFO8bnktqWn3nqq_O/view?usp=share_link
+https://drive.google.com/file/d/16Qyiy5hoPo5wqd8UtW4INysbUPoHWXzO/view?usp=share_link
 
 Please click link to download apk file.
 
