@@ -50,18 +50,18 @@ Before initiating the development of Music Palette, we conducted a Google Form s
 ---
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/17047cbe-390a-4a0a-acfd-ef7e5eeba4a6" width="800" height="350">
 
-<p>$\bf{\large{\color{#0000FF}Blue}}$ : I have residual hearing, allowing me to listen to music.</p>
-<p>$\bf{\large{\color{#FF0000}Red}}$ : I use hearing aids, in-ear devices, etc., to enjoy music.</p>
-<p>$\bf{\large{\color{#FFC300}Yellow}}$ : I experience music through visual and tactile sensations, such as attending live performances of artists through sign language interpretation.</p>
-<p>$\bf{\large{\color{#008000}Green}}$ : I don't engage much in enjoying music.</p>
+<p>$\bf{\color{#0000FF}Blue}$ : I have residual hearing, allowing me to listen to music.</p>
+<p>$\bf{\color{#FF0000}Red}$ : I use hearing aids, in-ear devices, etc., to enjoy music.</p>
+<p>$\bf{\color{#FFC300}Yellow}$ : I experience music through visual and tactile sensations, such as attending live performances of artists through sign language interpretation.</p>
+<p>$\bf{\color{#008000}Green}$ : I don't engage much in enjoying music.</p>
 
 ### 1-1. If you selected "I don't really engage in or enjoy music" in the previous question, what is the reason for that?
 ---
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/ce049884-1141-4722-8c48-bd0b8e0716b8" width="800" height="350">
 
-<p>$\bf{\large{\color{#0000FF}Blue}}$ : I desire to enjoy music, but the means to appreciate it are not widespread.</p>
-<p>$\bf{\large{\color{#FF0000}Red}}$ : I want to listen to music, but I find that the current methods do not convey music vividly, or I don't feel a strong interest in them.</p>
-<p>$\bf{\large{\color{#FFC300}Yellow}}$ : I have little interest in the genre of music.</p>
+<p>$\bf{\color{#0000FF}Blue}$ : I desire to enjoy music, but the means to appreciate it are not widespread.</p>
+<p>$\bf{\color{#FF0000}Red}$ : I want to listen to music, but I find that the current methods do not convey music vividly, or I don't feel a strong interest in them.</p>
+<p>$\bf{\color{#FFC300}Yellow}$ : I have little interest in the genre of music.</p>
 
 Many individuals with hearing impairment voted for Blue despite not choosing "I don't really engage in or enjoy music" in the previous question. This vote reflects the desire of people with hearing impairment for music appreciation. It also indicates that there is a lack of widespread means to facilitate their access to and enjoyment of music.
 
@@ -69,8 +69,8 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 ---
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1bfcfee1-1fe3-4e33-9fd8-0af39ea6b09e" width="800" height="350">
 
-<p>$\bf{\large{\color{#0000FF}Blue}}$ : Yes</p>
-<p>$\bf{\large{\color{#FF0000}Red}}$ : No</p>
+<p>$\bf{\color{#0000FF}Blue}$ : Yes</p>
+<p>$\bf{\color{#FF0000}Red}$ : No</p>
 
 8 out of 12 have experienced enjoying music through vibrations which supports the idea that experience music through vibrations is common for individuals with hearing impairment.
 
@@ -78,9 +78,9 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 ---
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/dbc48c3e-f2d3-449f-9fd8-3dc348168e1e" width="800" height="350">
 
-<p>$\bf{\large{\color{#0000FF}Blue}}$ : because the album cover was too abstract</p>
-<p>$\bf{\large{\color{#FF0000}Red}}$ : because it featured an unrelated picture of the artist</p>
-<p>$\bf{\large{\color{#FFC300}Yellow}}$ : can get sufficient information</p>
+<p>$\bf{\color{#0000FF}Blue}$ : because the album cover was too abstract</p>
+<p>$\bf{\color{#FF0000}Red}$ : because it featured an unrelated picture of the artist</p>
+<p>$\bf{\color{#FFC300}Yellow}$ : can get sufficient information</p>
 
 9 out of 12 voted that they cannot gather sufficient information about the music from the existing album cover which emphasizes the need for an image that effectively conveys music information.
 
