@@ -102,7 +102,7 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 - Vibration generation based on the beat of the music
 - Real-time amplitude graph of the music
 
-1st place, with 8 votes, goes to 'Image download generated based on the melody and lyrics of the music.' 2nd place, with 7 votes, is 'Vibration generation based on the beat of the music.' And 3rd place, with 6 votes, is the 'Playlist' feature. We developed all these 3 features in Music Palette.
+1st place, with 8 votes, goes to 'Image download generated based on the melody and lyrics of the music.' 2nd place, with 7 votes, is 'Vibration generation based on the beat of the music.' And 3rd place, with 6 votes, is the 'Playlist ( My Favorites )' feature. We developed all these 3 features in Music Palette.
 
 
 
