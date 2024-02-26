@@ -10,8 +10,6 @@ Music Palette - GDSC Solution Challenge 2024
 - [Target SDGs](#target-sdgs)
 - [Technical Components](#technical-components)
 - [Google Form Survey](#google-form-survey)
-    - [1. How do you typically experience music?](#1.-how-do-you-typically-experience-music?)
-    - 
 - [App Demo](#app-demo)
     - [Main Page](#main-page)
     - [Vibrations and Image created based on lyrics and melody](#vibrations-and-image-created-based-on-lyrics-and-melody)
