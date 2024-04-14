@@ -1,13 +1,19 @@
 # Import necessary libraries for web server, URL processing, HTTP requests, filesystem operations, and regular expressions
 from flask import Flask, request, jsonify, send_file
 from urllib.parse import unquote
+from PIL import Image
+from io import BytesIO
 import requests
 import os
 import subprocess
 import re
+import google.generativeai as genai
 
 # Define the server URL where the service is accessible
 SERVER_URL = "SERVER_URL"
+API_KEY = ""
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel(model_name='gemini-pro')
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -36,15 +42,15 @@ def process_audio():
         return "Invalid request parameters", 400
 
     # Download the audio file using the provided URL and extracted code
-    audio_file_name = download_audio(link, code)
+    audio_file = download_audio(link, code)
 
     # If downloading fails, return an error response
-    if not audio_file_name:
+    if not audio_file:
         return "Failed to download audio file", 500
 
     # [Placeholder] This section is intended for calling a generative AI model or script to generate an image based on the audio.
     # Actual image generation logic (e.g., calling a separate script or service) would go here.
-    # generate_image(audio_file_name, code)
+    generate_image(lyrics, code)
 
     # Construct the path to the potentially generated image and check if it exists
     generated_image_path = os.path.join('images', f'{code}.jpeg')
@@ -86,11 +92,28 @@ def download_audio(url, code):
 
 # Placeholder for a generative AI image generation function
 # This would execute an external script or service, using the downloaded audio as input to generate an image.
-def generate_image(audio_file_name, code):
-    try:
-        subprocess.run(['node', 'test.js', os.path.join('music', audio_file_name), str(code)])
-    except Exception as e:
-        print("Error generating image:", e)
+def generate_image(lyrics, code):
+    
+    # Ask a question based on the lyrics
+    question = "What scene does this lyric describe?"
+
+    # Generate content using the model
+    response = model.generate_content([
+        genai.Content.text(lyrics),
+        genai.Content.text(question)
+    ])
+    for content in response.candidates[0].content.parts:
+        if content.type == 'text':
+            print("Response Text:", content.text)
+        elif content.type == 'image':
+            # Assuming image content is returned as bytes
+            image = Image.open(BytesIO(content.bytes))
+            image.show()
+            # Optionally save the image
+            image.save('output_image.png')
+            return image, content.text
+    return None, "No image generated."
+
 
 # Define a route to serve image files from the 'images' directory
 @app.route('/images/<string:imageName>')
