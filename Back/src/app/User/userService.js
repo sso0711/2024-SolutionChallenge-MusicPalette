@@ -197,6 +197,17 @@ async function removeFile(filePath){
   }
 }
 
+// move file directory
+async function moveFile(filePath, newPath){
+  fs.rename(filePath, newPath, (err) => {
+    if (err) {
+        console.error('Error moving file:', err);
+        return;
+    }
+    console.log('File moved successfully!');
+  });
+}
+
 exports.postInitializeParse = async function(){
   try{
     await processLrcCover();
@@ -381,33 +392,80 @@ exports.postDuration = async function(){
 }
 
 exports.postUploadMp3 = async function(tempFile){
-  const uploadMusicDirectory = './assets/uploads/musics';
-  const uploadMp3FilePath = path.join(uploadMusicDirectory, tempFile);
-
-  const realFile = await processLrcCover(tempFile);
-
-  // lrc나 lyrics 찾기 못했을 때 에러 반환
-  if( realFile == "\"-1\""){
-    // mp3 파일 삭제
-    removeFile(uploadMp3FilePath); 
-    return errResponse(baseResponse.MP3_LYRIC_ERROR);
-  }
-
-  const index = realFile.lastIndexOf('.');
-  const realFileName = realFile.substring(0, index);
-
-  // is lyric is lrc or txt
-  const type = realFile.substring(index + 1);
+  try{
+    const db = admin.database();
+    
+    const uploadMusicDirectory = './assets/uploads/musics';
+    const uploadMp3FilePath = path.join(uploadMusicDirectory, tempFile);
   
-  console.log('lrc or lyric 긁어오기 성공', realFileName);
+    let realLyricFile = await processLrcCover(tempFile);
+    realLyricFile = realLyricFile.substring(1, realLyricFile.length-1);
+  
+    // lrc나 lyrics 찾기 못했을 때 에러 반환
+    if( realLyricFile == "\"-1\""){
+      // mp3 파일 삭제
+      removeFile(uploadMp3FilePath); 
+      return errResponse(baseResponse.MP3_LYRIC_ERROR);
+    }
+  
+    const index = realLyricFile.lastIndexOf('.');
+    const realTitle = realLyricFile.substring(0, index);
+  
+    // is lyric is lrc or txt
+    const type = realLyricFile.substring(index + 1);
+    
+    console.log('lrc or lyric 긁어오기 성공', realTitle);
+  
+    // vibration & duration 구하기
+    const vibrationAndDuration = await vibrationToJSONLibrosa(uploadMp3FilePath);
+  
+    const vibrations = JSON.stringify(vibrationAndDuration.vibrations, null, 2)
+    const duration = vibrationAndDuration.average;
+  
+    console.log('vibrations and duration 변환 성공');
+  
+    // made image & description 구하기
+  
+    // 다 성공했을 경우 uploads에서 모든걸 삭제하고 전체 곡 있는 곳으로 옮기기
+    // 옮겨야 할 장소
+    // 1. musics
+    const realMusicDirectory = './assets/musics';
+    const realMusicFilePath = path.join(realMusicDirectory, realTitle + '.mp3');
 
-  const vibrationAndDuration = await vibrationToJSONLibrosa(uploadMp3FilePath);
+    // 2. lyrics
+    const realLyricsDirectory = './assets/lyrics';
+    const realLyricsFilePath = path.join(realLyricsDirectory, realLyricFile);
 
-  const vibrations = JSON.stringify(vibrationAndDuration.vibrations, null, 2)
-  const duration = vibrationAndDuration.average;
+    // 3. coverimage
+    const realCoverimageDirectory = './assets/coverimages';
+    const realCoverimageFilePath = path.join(realCoverimageDirectory, realTitle + '.jpg');
 
-  console.log('vibrations and duration 변환 성공');
+    // // 4. madeimage
+    // const realMadeimageDirectory = './assets/madeimages';
+    // const realMadeimageFilePath = path.join(realMadeimageDirectory, realTitle + '.jpg');
 
+    // move directory - music, lyrics, coverimage, madeimage
+    moveFile(uploadMp3FilePath, realMusicFilePath);
+    moveFile(path.join('./assets/uploads/lyrics', realLyricFile), realLyricsFilePath);
+    // coverimage 존재 여부 확인
+    if (fs.existsSync(path.join('./assets/uploads/coverimages', realTitle+'.jpg'))) {
+      moveFile(path.join('./assets/uploads/coverimages', realTitle+'.jpg'), realCoverimageFilePath);
+    } else {
+      console.log('Coverimage does not exist, so cannot move');
+    }
+    // moveFile(path.join('./assets/uploads/madeimages', realTitle+'.jpg'), realMadeimageFilePath);
 
-  return response(baseResponse.SUCCESS);
+    console.log('move 완료 !!!');
+
+  
+    // DB에 저장하기
+  
+    // disk 50GB 미만으로 남았을 땐 업로드 금지
+  
+  
+    return response(baseResponse.SUCCESS);
+  }catch(error){
+    logger.error(`App - userService postUploadMp3 error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
 }

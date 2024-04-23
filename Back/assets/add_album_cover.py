@@ -16,10 +16,10 @@ def get_album_covers(filepath, filename):
             with open(coverimage_filepath, 'wb') as f:
                 f.write(image_data)
 
-            print("앨범 커버를 성공적으로 저장했습니다.")
+            return("앨범 커버를 성공적으로 저장했습니다.")
 
         else:
-            print("앨범 커버를 찾을 수 없습니다.")
+            return("앨범 커버를 찾을 수 없습니다.")
 
     except Exception as e:
-        print(f"오류 발생: {e}")
+        return(f"오류 발생: {e}")
