@@ -1,4 +1,5 @@
 const { logger } = require("../../../config/winston");
+const {errResponse} = require("../../../config/response");
 
 const userDao = require("./userDao");
 

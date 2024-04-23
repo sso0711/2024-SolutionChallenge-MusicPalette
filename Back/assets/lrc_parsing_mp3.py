@@ -42,7 +42,7 @@ artist = 0
 # 실행 방법 : terminal에 python3 lrc_parsing_mp3.py 실행
 
 # 제대로 lrc나 lyrics 받아오면 realFileName 반환. 실패하면 -1
-status = '-1'
+status = "-1"
 
 
 def track_clear():
@@ -100,7 +100,7 @@ def lrc_maker():
     time_clear()
     track_clear()
     del TEXT
-    print("%s. %s의 lrc파일을 가져왔습니다." % (i, available_file[i]))
+    # print("%s. %s의 lrc파일을 가져왔습니다." % (i, available_file[i]))
     success += 1
     return success
 
@@ -113,7 +113,7 @@ def lrc_delete():
     fail += 1
     track_clear()
     os.remove(lrc_filepath)
-    print("%s 은(는) 싱크가사를 지원하지 않습니다." % available_file[i])
+    # print("%s 은(는) 싱크가사를 지원하지 않습니다." % available_file[i])
     return fail
 
 # for file in glob.glob("./assets/musics/*.mp3"):  # mp3 파일 개수 파악
@@ -127,7 +127,7 @@ try:
     if len(FILE_LIST) != 0:  # mp3 곡이 있는지 확인하기
         for i in range(0, len(FILE_LIST)):
             music_filepath.append(os.path.join(music_directory, FILE_LIST[i]))
-            print(EasyID3("%s" % music_filepath[i]))
+            # print(EasyID3("%s" % music_filepath[i]))
             mp3_info = EasyID3("%s" % music_filepath[i])
             if 'album' in mp3_info.keys()  and 'artist' in mp3_info.keys()  and 'title' in mp3_info.keys() :  # 아티스트, 앨범, 타이틀 태그 있는지 확인
                 realFileName = mp3_info['title'][0]
@@ -135,6 +135,7 @@ try:
                 available_album.append(mp3_info['album'][0])
                 available_title.append(mp3_info['title'][0])
                 realFileName = mp3_info['title'][0]
+                # print(realFileName)
                 available_artist.append(mp3_info['artist'][0])
                 artist = mp3_info['artist'][0]
                 if "," in mp3_info['artist'][0]:
@@ -144,7 +145,7 @@ try:
                     available_first_artist.append(mp3_info['artist'][0])
                     available_second_artist.append('')
             else:
-                print("%s의 태그가 없습니다." % FILE_LIST[i])
+                # print("%s의 태그가 없습니다." % FILE_LIST[i])
                 fail += 1
 
         for i in range(0, len(available_file)):
@@ -165,7 +166,7 @@ try:
                     for id in soup_artist.select('#container > section > div > ul > li:nth-of-type(1) > figure > figcaption > a.artistTitle'):  # 아티스트 결과
                         artist_artistid = id['href'][32:-25]
                 else:
-                    print("%s에 대한 검색 결과가 없습니다." % available_file[i])
+                    # print("%s에 대한 검색 결과가 없습니다." % available_file[i])
                     fail += 1
                     continue
             else:
@@ -173,14 +174,14 @@ try:
                     for id in soup_first_artist.select('#container > section > div > ul > li:nth-of-type(1) > figure > figcaption > a.artistTitle'):  # 아티스트 결과
                         artist_first_artistid = id['href'][32:-25]
                 else:
-                    print("%s에 대한 검색 결과가 없습니다." % available_file[i])
+                    # print("%s에 대한 검색 결과가 없습니다." % available_file[i])
                     fail += 1
                     continue
                 if soup_second_artist.select('#container > section > div > ul > li:nth-of-type(1) > figure > figcaption > a.artistTitle'):
                     for id in soup_second_artist.select('#container > section > div > ul > li:nth-of-type(1) > figure > figcaption > a.artistTitle'):  # 아티스트 결과
                         artist_second_artistid = id['href'][32:-25]
                 else:
-                    print("%s에 대한 검색 결과가 없습니다." % available_file[i])
+                    # print("%s에 대한 검색 결과가 없습니다." % available_file[i])
                     fail += 1
                     continue
 
@@ -189,7 +190,7 @@ try:
                     album_artistid = id['artistid']
                     album_albumid = id['albumid']
             else:
-                print("%s에 대한 검색 결과가 없습니다."%available_file[i])
+                # print("%s에 대한 검색 결과가 없습니다."%available_file[i])
                 fail += 1
                 continue
 
@@ -211,13 +212,13 @@ try:
                         if "|" in data['result']['lyrics']:  # time이 있을 때,
                             lrc_maker()
                             get_album_covers(music_filepath[i], realFileName)
-                            status = realFileName
+                            status = lrc_filename
                         else:  # time이 없을 때,
                             lrc_delete()
                     else:  # 싱크 가사 없을 때,
                         lrc_delete()
                 else:
-                    print("%s에 대한 검색 결과가 없습니다." % available_file[i])
+                    # print("%s에 대한 검색 결과가 없습니다." % available_file[i])
                     fail += 1
                     track_clear()
             else:
@@ -230,7 +231,7 @@ try:
                         if "|" in data['result']['lyrics']:  # time이 있을 때,
                             lrc_maker()
                             get_album_covers(music_filepath[i], realFileName)
-                            status = realFileName
+                            status = lrc_filename
                         else:  # time이 없을 때,
                             lrc_delete()
                     else:  # 싱크 가사 없을 때,
@@ -244,21 +245,21 @@ try:
                         if "|" in data['result']['lyrics']:  # time이 있을 때,
                             lrc_maker()
                             get_album_covers(music_filepath[i], realFileName)
-                            status = realFileName
+                            status = lrc_filename
                         else:  # time이 없을 때,
                             lrc_delete()
                     else:  # 싱크 가사 없을 때,
                         lrc_delete()
                 else:
-                    print("%s에 대한 검색 결과가 없습니다." % available_file[i])
+                    # print("%s에 대한 검색 결과가 없습니다." % available_file[i])
                     fail += 1
                     track_clear()
 
         if i == len(available_file)-1:
-            print("============완료============")
-            print("가져온 lrc파일 수 : %s 개"% success)
-            print("실패한 곡 수 : %s 개"% fail)
-            print("============================")
+            # print("============완료============")
+            # print("가져온 lrc파일 수 : %s 개"% success)
+            # print("실패한 곡 수 : %s 개"% fail)
+            # print("============================")
 
             if fail==1:
                 # " (" 문자열을 기준으로 분리
@@ -268,15 +269,18 @@ try:
                 else:
                     split_title = realFileName
                 
+                # print(split_title)
+                
                 # naver에서 가사 찾기
                 status = get_lyrics_naver(artist, realFileName, split_title)
-                if status != '-1':
+                if status != "-1":
                     get_album_covers(music_filepath[i], realFileName)
 
-    else:  # flac파일이 없을 때
-        print("==========ERROR===========")
-        print("mp3 파일을 찾을 수 없습니다.")
-        print("==========================")
+    # else:  # flac파일이 없을 때
+        # print(json.dumps(status))
+        # print("==========ERROR===========")
+        # print("mp3 파일을 찾을 수 없습니다.")
+        # print("==========================")
     
     print(json.dumps(status))
 

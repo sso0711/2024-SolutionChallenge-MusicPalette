@@ -125,19 +125,19 @@ async function getDuration(mp3FilePath){
 }
 
 // process get lrc & coverimages
-async function processLrcCover(mp3FilePath){
+async function processLrcCover(mp3File){
   return new Promise((resolve, reject) => {
         const pythonScript = './assets/lrc_parsing_mp3.py';
 
         // madmom module & scipy module setting _ 설정 안하면 nodejs에서 모듈 파악 불가
         process.env.PYTHONPATH = '/home/thdudp7007/.local/lib/python3.8/site-packages:./assets/add_album_cover.py:./assets/lyrics_naver.py';
     
-        exec(`python3 ${pythonScript} ${mp3FilePath}`, (error, stdout, stderr) => {
+        exec(`python3 ${pythonScript} ${mp3File}`, (error, stdout, stderr) => {
           if (error) {
             console.error('Execution Error:', error);
             reject(stderr || 'Execution failed');
           } else {
-            resolve(stdout);
+            resolve(stdout.trim());
           }
         });
     });
@@ -341,14 +341,23 @@ exports.postDuration = async function(){
 }
 
 exports.postUploadMp3 = async function(tempFileName){
-  const uploadMusicDirectory = './assets/uploads/musics';
-  const uploadMp3FilePath = path.join(uploadMusicDirectory, tempFileName);
 
-  const realFileName = await processLrcCover(uploadMp3FilePath);
+  const realFile = await processLrcCover(tempFileName);
 
-  if( realFileName == '-1'){
+  // lrc나 lyrics 찾기 못했을 때 에러 반환
+  if( realFile == "\"-1\""){
     return errResponse(baseResponse.MP3_LYRIC_ERROR);
   }
+
+  const index = realFile.lastIndexOf('.');
+
+  const realFileName = realFile.substring(0, index);
+
+  // is lyric is lrc or txt
+  const type = realFile.substring(index + 1);
+
+  console.log(realFileName, type);
+
   
   console.log('lrc or lyric 긁어오기 성공', realFileName);
   return response(baseResponse.SUCCESS);

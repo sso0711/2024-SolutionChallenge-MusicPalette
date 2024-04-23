@@ -184,6 +184,7 @@ async function validateFirebaseIdToken(idToken){
   if(!req.file){
     return res.send(errResponse(baseResponse.FILE_NOT_UPLOADED));
   }
+  console.log('upload came');
 
   const tempFileName = req.uuid + '.mp3';
 
