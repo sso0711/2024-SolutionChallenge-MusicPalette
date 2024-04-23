@@ -16,6 +16,12 @@ tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
 
 times = librosa.frames_to_time(beats, sr = sr)
 
+compare = len(times) - 1
+
+# 평균 비트 간의 거리
+average = (times[compare] - times[0]) / compare
+average = int(average * 1000)
+
 # RNNBarProcessor로 downbeat 확률 계산
 proc = madmom.features.downbeats.RNNBarProcessor()
 downbeat_prob = proc((audio_file, times))
@@ -30,6 +36,8 @@ for i in range(len(downbeat_prob) - 1):
 # # 결과를 stdout으로 출력
 for i in range(len(rounded)):
     print(json.dumps(rounded[i]))
+
+print(json.dumps(average))
 
 # # 결과 값을 종료코드로 전달
 sys.exit(0)

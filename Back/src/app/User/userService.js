@@ -93,12 +93,36 @@ async function vibrationToJSONLibrosa(mp3FilePath){
         console.error('Execution Error:', error);
         reject(stderr || 'Execution failed');
       } else {
+        const lines = stdout.trim().split('\n');
+
+        // 마지막 줄 처리 (average - for duration)
+        const averageData = lines.pop();
+        let average;
+        try {
+          average = JSON.parse(averageData);
+        } catch (parseError) {
+          console.error('Parsing error for average:', parseError);
+          return reject(new Error('Failed to parse average from Python script'));
+        }
+
+        try {
+          lines.map(line => {
+            const [time, strength] = JSON.parse(line);
+            vibrations.push({"time": time, "strength": strength});
+          });
+          // 모든 데이터와 average를 반환
+          resolve({vibrations, average});
+        } catch (parseError) {
+          console.error('Parsing error for vibrations:', parseError);
+          reject(new Error('Failed to parse vibration data from Python script'));
+        }
+
         // Parsing output value (multiple lines) of python scrypt into JSON format 
-        stdout.trim().split('\n').map(line => {
-          const [time, strength] = JSON.parse(line);
-          vibrations.push({"time": time, "strength": strength});
-        });
-        resolve(JSON.stringify(vibrations, null, 2));
+        // stdout.trim().split('\n').map(line => {
+        //   const [time, strength] = JSON.parse(line);
+        //   vibrations.push({"time": time, "strength": strength});
+        // });
+        // resolve(JSON.stringify(vibrations, null, 2));
       }
     });
   });
@@ -154,6 +178,22 @@ async function downloadAndSaveImage(imageUrl, savePath) {
     console.log('Image downloaded and saved successfully.');
   } catch (error) {
     console.error('Error downloading or saving the image:', error.message || error);
+  }
+}
+
+// remove file
+async function removeFile(filePath){
+  // 파일 존재 여부 확인
+  if (fs.existsSync(filePath)) {
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            console.error('File deletion error:', err);
+            return;
+        }
+        console.log('File deleted successfully');
+    });
+  } else {
+    console.log('File does not exist, cannot delete');
   }
 }
 
@@ -340,25 +380,34 @@ exports.postDuration = async function(){
   }
 }
 
-exports.postUploadMp3 = async function(tempFileName){
+exports.postUploadMp3 = async function(tempFile){
+  const uploadMusicDirectory = './assets/uploads/musics';
+  const uploadMp3FilePath = path.join(uploadMusicDirectory, tempFile);
 
-  const realFile = await processLrcCover(tempFileName);
+  const realFile = await processLrcCover(tempFile);
 
   // lrc나 lyrics 찾기 못했을 때 에러 반환
   if( realFile == "\"-1\""){
+    // mp3 파일 삭제
+    removeFile(uploadMp3FilePath); 
     return errResponse(baseResponse.MP3_LYRIC_ERROR);
   }
 
   const index = realFile.lastIndexOf('.');
-
   const realFileName = realFile.substring(0, index);
 
   // is lyric is lrc or txt
   const type = realFile.substring(index + 1);
-
-  console.log(realFileName, type);
-
   
   console.log('lrc or lyric 긁어오기 성공', realFileName);
+
+  const vibrationAndDuration = await vibrationToJSONLibrosa(uploadMp3FilePath);
+
+  const vibrations = JSON.stringify(vibrationAndDuration.vibrations, null, 2)
+  const duration = vibrationAndDuration.average;
+
+  console.log('vibrations and duration 변환 성공');
+
+
   return response(baseResponse.SUCCESS);
 }
