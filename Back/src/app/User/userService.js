@@ -78,15 +78,61 @@ async function vibrationToJSON(mp3FilePath){
   });
 }
 
+// for test vibration
+async function vibrationToJSONLibrosa(mp3FilePath){
+  return new Promise((resolve, reject) => {
+    const pythonScript = './assets/vibration_librosa.py';
+    
+    const vibrations = [];
+
+    // madmom module & scipy module setting _ for nodejs에서 모듈 파악
+    process.env.PYTHONPATH = './assets/madmom:/home/thdudp7007/.local/lib/python3.8/site-packages';
+
+    exec(`python3 ${pythonScript} "${mp3FilePath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Execution Error:', error);
+        reject(stderr || 'Execution failed');
+      } else {
+        // Parsing output value (multiple lines) of python scrypt into JSON format 
+        stdout.trim().split('\n').map(line => {
+          const [time, strength] = JSON.parse(line);
+          vibrations.push({"time": time, "strength": strength});
+        });
+        resolve(JSON.stringify(vibrations, null, 2));
+      }
+    });
+  });
+}
+
+async function getDuration(mp3FilePath){
+  return new Promise((resolve, reject) => {
+    const pythonScript = './assets/vibration_duration.py';
+    
+    process.env.PYTHONPATH = '/home/thdudp7007/.local/lib/python3.8/site-packages';
+
+    exec(`python3 ${pythonScript} "${mp3FilePath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Execution Error:', error);
+        reject(stderr || 'Execution failed');
+      } else {
+        // Parsing output value (multiple lines) of python scrypt into JSON format 
+        const duration = JSON.parse(stdout.trim());
+
+        resolve(duration);
+      }
+    });
+  });
+}
+
 // process get lrc & coverimages
-async function processLrcCover(){
-    return new Promise((resolve, reject) => {
+async function processLrcCover(mp3FilePath){
+  return new Promise((resolve, reject) => {
         const pythonScript = './assets/lrc_parsing_mp3.py';
 
         // madmom module & scipy module setting _ 설정 안하면 nodejs에서 모듈 파악 불가
-        process.env.PYTHONPATH = '/home/thdudp7007/.local/lib/python3.8/site-packages:./assets/add_album_cover.py';
+        process.env.PYTHONPATH = '/home/thdudp7007/.local/lib/python3.8/site-packages:./assets/add_album_cover.py:./assets/lyrics_naver.py';
     
-        exec(`python3 ${pythonScript}`, (error, stdout, stderr) => {
+        exec(`python3 ${pythonScript} ${mp3FilePath}`, (error, stdout, stderr) => {
           if (error) {
             console.error('Execution Error:', error);
             reject(stderr || 'Execution failed');
@@ -241,4 +287,69 @@ exports.deleteUserLike = async function(userId, musicId){
     logger.error(`App - userService deleteUserLike error\n: ${error.message}`);
     return errResponse(baseResponse.DB_ERROR);
   }
+}
+
+// for test vibration
+exports.postVibration = async function(){
+
+  try{
+    const db = admin.database();
+    const mp3Directory = './assets/musics';
+    const mp3Files = await fs.promises.readdir(mp3Directory);
+    const mp3FilePath = mp3Files.map(file => path.join(mp3Directory, file));
+
+    for(let i = 0; i < mp3Files.length; i++){
+
+      const vibrations = await vibrationToJSONLibrosa(mp3FilePath[i]);
+
+      const musicId = i+1;
+
+      await userDao.postVibration(db, musicId, vibrations);
+      console.log(musicId, ' end');
+    }
+    return response(baseResponse.SUCCESS);
+  }catch(error){
+    logger.error(`App - userService postVibration error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
+}
+
+// for duration test
+exports.postDuration = async function(){
+  try{
+    const db = admin.database();
+
+      const mp3Directory = './assets/musics';
+      const mp3Files = await fs.promises.readdir(mp3Directory);
+      const mp3FilePath = mp3Files.map(file => path.join(mp3Directory, file));
+
+      for(let i = 0; i < mp3Files.length; i++){
+
+          console.log(i+1);
+          const duration = await getDuration(mp3FilePath[i]);
+
+          const musicId = i+1;
+
+          await userDao.postDuration(db, musicId,  duration);
+          console.log('duration end');
+      }
+      return response(baseResponse.SUCCESS);
+  }catch(error){
+    logger.error(`App - userService postDuration error\n: ${error.message}`);
+    return errResponse(baseResponse.DB_ERROR);
+  }
+}
+
+exports.postUploadMp3 = async function(tempFileName){
+  const uploadMusicDirectory = './assets/uploads/musics';
+  const uploadMp3FilePath = path.join(uploadMusicDirectory, tempFileName);
+
+  const realFileName = await processLrcCover(uploadMp3FilePath);
+
+  if( realFileName == '-1'){
+    return errResponse(baseResponse.MP3_LYRIC_ERROR);
+  }
+  
+  console.log('lrc or lyric 긁어오기 성공', realFileName);
+  return response(baseResponse.SUCCESS);
 }

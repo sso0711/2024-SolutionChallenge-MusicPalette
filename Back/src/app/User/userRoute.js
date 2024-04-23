@@ -1,7 +1,26 @@
 module.exports = function(app){
     const user = require('./userController');
     const express = require('express');
+    
+    // use multer for getting mp3file
+    const multer = require('multer');
+    const { v4: uuidv4 } = require('uuid');
     app.use(express.urlencoded({ extended: true }));
+
+    const storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+          cb(null, './assets/uploads/musics/');  // 파일이 저장될 경로
+        },
+        filename: function (req, file, cb) {
+          const uniqueName = uuidv4();
+          cb(null, uniqueName + '.mp3');
+          req.uuid = uniqueName;
+        }
+      });
+      
+    const upload = multer({ storage: storage });
+
+
 
      // provide coverimages
      app.use('/images/cover-image', express.static('./assets/coverimages'));
@@ -35,5 +54,14 @@ module.exports = function(app){
 
      // 8. delete user like API
      app.delete('/user/like/:music_id', user.deleteUserLike);
+
+     // vibration test
+     app.post('/vibration-test', user.postVibration);
+
+     // duration
+     app.post('/duration-test', user.postDuration);
+
+     // upload mp3 test
+     app.post('/musics/upload-mp3', upload.single('mp3file'), user.postUploadMp3);
 
 };
