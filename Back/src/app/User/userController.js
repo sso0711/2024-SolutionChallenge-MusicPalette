@@ -9,6 +9,7 @@ const admin = require("firebase-admin");
 const serviceAccount = require("../../../config/music-palette-firebase-adminsdk-4u2ui-4db9a9b2ff.json");
 const databaseURL = require("../../../config/database").getDatabaseURL();
 
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: databaseURL
@@ -49,6 +50,7 @@ async function validateFirebaseIdToken(idToken){
     // 
   }
 }
+
 
  /**
   * API No. 1
@@ -153,4 +155,40 @@ async function validateFirebaseIdToken(idToken){
 
     const userLikes = await userService.deleteUserLike(userId, musicId);
     return res.send(userLikes);
+ }
+
+ /**
+  * API for vibration test ! success
+  * [POST]
+  */
+ exports.postVibration = async function(req, res){
+    // test update 할 music의 music_id 
+    const response = await userService.postVibration();
+    return res.send(response);
+ }
+
+ /**
+  * API for duration test ! success
+  * [POST]
+  */
+ exports.postDuration = async function(req, res){
+  const response = await userService.postDuration();
+  return res.send(response);
+ }
+
+ /**
+  * API for upload mp3 test
+  * [POST]
+  */
+ exports.postUploadMp3 = async function(req, res){
+  if(!req.file){
+    return res.send(errResponse(baseResponse.FILE_NOT_UPLOADED));
+  }
+  console.log('upload came');
+
+  const tempFileName = req.uuid + '.mp3';
+
+  const response = await userService.postUploadMp3(tempFileName);
+  return res.send(response);
+
  }

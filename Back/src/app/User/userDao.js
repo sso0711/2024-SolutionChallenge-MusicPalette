@@ -75,7 +75,8 @@ async function getMusicInfo(db, musicId){
 
     const musicInfo = {
         "lyrics": JSON.parse(data.lyrics),
-        "vibrations": JSON.parse(data.vibrations)
+        "vibrations": JSON.parse(data.vibrations),
+        "duration": JSON.parse(data.duration)
     };
 
     return JSON.stringify(musicInfo, null, 2);
@@ -135,6 +136,29 @@ async function deleteUserLike(db, userId, musicId){
     }
 }
 
+// for vibration test
+async function postVibration(db, musicId, vibrations){
+    const ref = db.ref('Musics/' + musicId);
+
+    await ref.update(
+        {
+            vibrations: vibrations,
+        }
+    );
+}
+
+// for duration test
+async function postDuration(db, musicId, duration){
+    const ref = db.ref('Musics/'+ musicId);
+
+
+    await ref.update(
+        {
+            duration: duration,
+        }
+    );
+}
+
 module.exports ={
     postInitializeMade,
     postInitializeStore,
@@ -143,5 +167,7 @@ module.exports ={
     getUserLikes,
     postUserLike,
     checkDBMusicExist,
-    deleteUserLike
+    deleteUserLike,
+    postVibration,
+    postDuration
 };
