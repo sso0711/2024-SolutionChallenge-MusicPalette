@@ -1,4 +1,4 @@
-# Music Palette
+# Music Palette - Top 100 Awarded !!!
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/17644f0d-488a-4604-a863-19bb43746800" width="300" height="300">
 
 Music Palette - GDSC Solution Challenge 2024
