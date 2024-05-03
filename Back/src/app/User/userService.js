@@ -15,37 +15,48 @@ const { exec } = require('child_process');
 // Service: Create, Update, Delete business logic 
 
 // change lrc to json
-async function lrcToJson(lrcFilePath) {
+async function lrcToJson(lrcFilePath, type) {
     const lrcContent = fs.readFileSync(lrcFilePath, 'utf-8');
     const lines = lrcContent.split('\n');
   
     const lyrics = [];
   
     for (const line of lines) {
-      const match = line.match(/\[([0-9:.]+)\](.*)/);
+      if(type == 'lrc'){
+        const match = line.match(/\[([0-9:.]+)\](.*)/);
   
-      if (match) {
-        const time = match[1];
-        const text = match[2].trim();
-  
-        lyrics.push({"time": time, "lyric": text});
+        if (match) {
+          const time = match[1];
+          const text = match[2].trim();
+    
+          lyrics.push({"time": time, "lyric": text});
+        }
+      }
+      else{ // txt
+        const text = line.trim();
+        lyrics.push({"time": "00:00.0", "lyric": text});
       }
     }
     return JSON.stringify(lyrics, null, 2);
 }
 
 // change lrc to string
-async function lrcToString(lrcFilePath){
+async function lrcOrTxtToString(lrcFilePath, type){
   const lrcContent = fs.readFileSync(lrcFilePath, 'utf-8');
   const lines = lrcContent.split('\n');
   let lyrics = '';
 
   for (const line of lines) {
-    const match = line.match(/\[([0-9:.]+)\](.*)/);
+    if(type == 'lrc'){
+      const match = line.match(/\[([0-9:.]+)\](.*)/);
 
-    if (match) {
-      const text = match[2].trim();
-      lyrics += text;
+      if (match) {
+        const text = match[2].trim();
+        lyrics += text;
+      }
+    }
+    else{ // txt
+      lyrics += line;
     }
   }
   return lyrics;
@@ -116,13 +127,6 @@ async function vibrationToJSONLibrosa(mp3FilePath){
           console.error('Parsing error for vibrations:', parseError);
           reject(new Error('Failed to parse vibration data from Python script'));
         }
-
-        // Parsing output value (multiple lines) of python scrypt into JSON format 
-        // stdout.trim().split('\n').map(line => {
-        //   const [time, strength] = JSON.parse(line);
-        //   vibrations.push({"time": time, "strength": strength});
-        // });
-        // resolve(JSON.stringify(vibrations, null, 2));
       }
     });
   });
@@ -161,7 +165,7 @@ async function processLrcCover(mp3File){
             console.error('Execution Error:', error);
             reject(stderr || 'Execution failed');
           } else {
-            resolve(stdout.trim());
+            resolve(JSON.parse(stdout));
           }
         });
     });
@@ -206,6 +210,40 @@ async function moveFile(filePath, newPath){
     }
     console.log('File moved successfully!');
   });
+}
+
+// send request to ML Server and get madeImage / Description
+async function madeImage(title, type){
+  try{
+    // ML Server endpoint
+    const apiUrl = 'https://2b6a-116-44-106-196.ngrok-free.app';
+
+    const encodedTitle = encodeURI(title);
+    let imageExplain  = ''
+
+    const requestData = {
+      link: 'http://music-palette.shop/musics/mp3-file/' + encodedTitle +'.mp3',
+      lyrics: lrcOrTxtToString('./assets/uploads/lyrics/' + decodeURI(encodedTitle)+'.' + type, type)
+    }
+
+    axios.post(apiUrl, requestData)
+    .then(async response => {
+      // get information from JSON data 
+      const imageLink = response.data.url;
+      imageExplain = response.data.text;
+
+      await downloadAndSaveImage(imageLink, './assets/uploads/madeimages/' + decodeURI(encodedTitle)+'.jpg');
+    })
+    .catch(error => {
+      // Process Error
+      console.error('Error:', error.message || error);
+    });
+
+    return imageExplain;
+
+  }catch(error){
+    return -1;
+  }
 }
 
 exports.postInitializeParse = async function(){
@@ -398,11 +436,15 @@ exports.postUploadMp3 = async function(tempFile){
     const uploadMusicDirectory = './assets/uploads/musics';
     const uploadMp3FilePath = path.join(uploadMusicDirectory, tempFile);
   
-    let realLyricFile = await processLrcCover(tempFile);
-    realLyricFile = realLyricFile.substring(1, realLyricFile.length-1);
+    const result = await processLrcCover(tempFile);
+    const realLyricFile = result.lyricFile;
+    const artist = result.artist;
+
+    console.log(realLyricFile);
+    console.log(artist);
   
     // lrc나 lyrics 찾기 못했을 때 에러 반환
-    if( realLyricFile == "\"-1\""){
+    if( realLyricFile == -1){
       // mp3 파일 삭제
       removeFile(uploadMp3FilePath); 
       return errResponse(baseResponse.MP3_LYRIC_ERROR);
@@ -413,6 +455,9 @@ exports.postUploadMp3 = async function(tempFile){
   
     // is lyric is lrc or txt
     const type = realLyricFile.substring(index + 1);
+
+    const lyrics = await lrcToJson(path.join('./assets/uploads/lyrics', realLyricFile), type);
+
     
     console.log('lrc or lyric 긁어오기 성공', realTitle);
   
@@ -425,9 +470,18 @@ exports.postUploadMp3 = async function(tempFile){
     console.log('vibrations and duration 변환 성공');
   
     // made image & description 구하기
+    // const imageExplain = madeImage(realTitle, type);
+
+    // if(imageExplain == -1){
+    //   removeFile(uploadMp3FilePath);
+    //   removeFile('./assets/uploadas/lyrics/'+realLyricFile);
+    //   return errResponse(baseResponse.MP3_MADE_ERROR);
+    // }
+    // console.log(imageExplain);
+
+    // console.log('Image made & description 성공');
   
     // 다 성공했을 경우 uploads에서 모든걸 삭제하고 전체 곡 있는 곳으로 옮기기
-    // 옮겨야 할 장소
     // 1. musics
     const realMusicDirectory = './assets/musics';
     const realMusicFilePath = path.join(realMusicDirectory, realTitle + '.mp3');
@@ -456,17 +510,32 @@ exports.postUploadMp3 = async function(tempFile){
     // moveFile(path.join('./assets/uploads/madeimages', realTitle+'.jpg'), realMadeimageFilePath);
 
     console.log('move 완료 !!!');
+  
+    // DB에 저장하기 - image explain 추가
+    const postUploadMp3Params = [realTitle, encodeURI(realTitle), artist, lyrics, vibrations, duration];
+    await userDao.postUploadMp3(db, postUploadMp3Params);
 
-    // forfor test
-  
-    // DB에 저장하기
-  
-    // disk 50GB 미만으로 남았을 땐 업로드 금지
-  
+    // User 전체 좋아요 list update하기
+    await userDao.updateUserLikes(db);
+    
   
     return response(baseResponse.SUCCESS);
   }catch(error){
     logger.error(`App - userService postUploadMp3 error\n: ${error.message}`);
     return errResponse(baseResponse.DB_ERROR);
   }
+}
+
+exports.test = async function(){
+  const db = admin.database();
+  await userDao.test(db);
+
+  return response(baseResponse.SUCCESS);
+}
+
+exports.testtest = async function(musicId){
+  const db = admin.database();
+  await userDao.testtest(db, musicId);
+
+  return response(baseResponse.SUCCESS);
 }

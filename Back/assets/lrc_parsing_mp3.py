@@ -42,7 +42,7 @@ artist = 0
 # 실행 방법 : terminal에 python3 lrc_parsing_mp3.py 실행
 
 # 제대로 lrc나 lyrics 받아오면 realFileName 반환. 실패하면 -1
-status = "-1"
+status = -1
 
 
 def track_clear():
@@ -212,7 +212,7 @@ try:
                         if "|" in data['result']['lyrics']:  # time이 있을 때,
                             lrc_maker()
                             get_album_covers(music_filepath[i], realFileName)
-                            status = lrc_filename
+                            status = lrc_filename 
                         else:  # time이 없을 때,
                             lrc_delete()
                     else:  # 싱크 가사 없을 때,
@@ -231,7 +231,7 @@ try:
                         if "|" in data['result']['lyrics']:  # time이 있을 때,
                             lrc_maker()
                             get_album_covers(music_filepath[i], realFileName)
-                            status = lrc_filename
+                            status = lrc_filename 
                         else:  # time이 없을 때,
                             lrc_delete()
                     else:  # 싱크 가사 없을 때,
@@ -245,7 +245,7 @@ try:
                         if "|" in data['result']['lyrics']:  # time이 있을 때,
                             lrc_maker()
                             get_album_covers(music_filepath[i], realFileName)
-                            status = lrc_filename
+                            status = lrc_filename 
                         else:  # time이 없을 때,
                             lrc_delete()
                     else:  # 싱크 가사 없을 때,
@@ -273,7 +273,7 @@ try:
                 
                 # naver에서 가사 찾기
                 status = get_lyrics_naver(artist, realFileName, split_title)
-                if status != "-1":
+                if status != -1:
                     get_album_covers(music_filepath[i], realFileName)
 
     # else:  # flac파일이 없을 때
@@ -282,9 +282,9 @@ try:
         # print("mp3 파일을 찾을 수 없습니다.")
         # print("==========================")
     
-    print(json.dumps(status))
+    print(json.dumps({"lyricFile": status, "artist": artist}))
 
 except:
-    print(json.dumps(status))
+    print(json.dumps({"lyricFile" : status}))
 
 sys.exit(0)
