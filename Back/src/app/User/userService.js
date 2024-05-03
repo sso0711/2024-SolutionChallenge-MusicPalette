@@ -452,6 +452,15 @@ exports.postUploadMp3 = async function(tempFile){
   
     const index = realLyricFile.lastIndexOf('.');
     const realTitle = realLyricFile.substring(0, index);
+
+    // 이미 있는 노래인지 체크
+    const isExist = await userDao.isExistMusic(db, realTitle, artist);
+    console.log(isExist);
+    if(isExist == 1){
+      removeFile(uploadMp3FilePath);
+      removeFile(path.join('./assets/uploads/lyrics', realLyricFile));
+      return errResponse(baseResponse.MP3_ALREADY_EXIST);
+    }
   
     // is lyric is lrc or txt
     const type = realLyricFile.substring(index + 1);

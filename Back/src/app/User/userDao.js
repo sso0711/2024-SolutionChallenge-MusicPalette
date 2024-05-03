@@ -177,6 +177,29 @@ async function postUploadMp3(db, postUploadMp3Params){
 
 }
 
+// 존재하는 노래인지 체크
+async function isExistMusic(db, title, artist){
+    const musicNum = (await db.ref('last_music_id').once('value')).val();
+    const ref = db.ref('Musics');
+    const data = (await ref.once('value')).val();
+
+    let tempAirtst;
+    let tempTitle;
+
+    for(let i = 1; i <= musicNum; i++){
+        tempAirtst = data[i].artist;
+        tempTitle = data[i].title;
+
+        console.log(tempAirtst);
+        console.log(tempTitle);
+
+        if(title == tempTitle && artist == tempAirtst){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 // 곡 추가 되었을 때, User의 전체 likes 업데이트
 // lock 필요. 누가 userLikes 전체 업데이트 중에 user 좋아요 list 읽어가기 하면 안된다
 async function updateUserLikes(db) {
@@ -240,6 +263,7 @@ module.exports ={
     postVibration,
     postDuration,
     postUploadMp3,
+    isExistMusic,
     updateUserLikes,
     test,
     testtest
