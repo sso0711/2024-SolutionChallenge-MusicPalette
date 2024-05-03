@@ -19,7 +19,7 @@ ENV PATH "$PATH:/flutter/bin"
 WORKDIR /app
 
 # 소스 코드 복사
-COPY Front/music_palette /app
+COPY music_palette /app
 
 # Flutter 앱 빌드
 RUN flutter pub get && flutter build apk --release
