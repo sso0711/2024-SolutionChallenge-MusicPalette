@@ -1,6 +1,9 @@
 # 사용할 이미지 선택
 FROM node:latest
 
+# npm 업데이트
+RUN npm install -g npm
+
 # 의존성 설치
 RUN npm install
 
