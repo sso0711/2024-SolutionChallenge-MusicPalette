@@ -22,7 +22,7 @@ WORKDIR /app
 COPY ./ /app
 
 # 소스 코드 디렉토리로 이동
-WORKDIR /app/Front/music_palette
+WORKDIR /app/music_palette
 
 # Flutter 앱 빌드
 RUN flutter pub get && flutter build apk --release
