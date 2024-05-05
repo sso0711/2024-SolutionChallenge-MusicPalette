@@ -12,8 +12,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Flutter SDK 경로를 환경 변수로 추가
-ENV PATH "$PATH:/bin"
+# Flutter SDK 다운로드 및 설치
+RUN git clone https://github.com/flutter/flutter.git /flutter
+ENV PATH "$PATH:/flutter/bin"
 
 # 작업 디렉토리 설정
 WORKDIR /app
