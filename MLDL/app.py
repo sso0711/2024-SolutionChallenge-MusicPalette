@@ -1,73 +1,62 @@
-# Import necessary libraries for web server, URL processing, HTTP requests, filesystem operations, and regular expressions
+# Import necessary packages.
 from flask import Flask, request, jsonify, send_file
 from urllib.parse import unquote
 from PIL import Image
 from io import BytesIO
 import requests
 import os
-import subprocess
 import re
 import google.generativeai as genai
+from openai import OpenAI
 
-# Define the server URL where the service is accessible
-SERVER_URL = "SERVER_URL"
-API_KEY = "AIzaSyC_p5YJU8yUStiqA0ABAeJUXpWEPGVMdXI"
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel(model_name='gemini-pro')
-
-# Initialize the Flask application
+# Create a Flask application.
 app = Flask(__name__)
 
-# Define a route for processing POST requests at the root URL
+# Set server URL and API key.
+SERVER_URL = "SERVER_URL"
+GEMINI_API_KEY = "GEMINI_API_KEY"
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel(model_name='gemini-pro')
+
+# Initialize OpenAI client.
+client = OpenAI(
+    api_key = "OPENAI_API_KEY"
+)
+
+# Handle requests to the '/' endpoint with the POST method.
 @app.route('/', methods=['POST'])
 def process_audio():
-    # Extract JSON data from the incoming request
+    # Get request data.
     request_data = request.json
-    # Ensure the request contains a 'link' field; if not, return an error
     if 'link' not in request_data:
         return "Invalid request parameters", 400
-    
-    # Extract 'lyrics' and 'link' from the request data
     lyrics = request_data['lyrics']
     link = request_data['link']
-    # Regular expression to extract a specific part from the link (e.g., a code or identifier)
     pattern = r'/([^/]+)\.mp3$'
-    # Use regex to find matches in the link, aiming to extract a unique code for the audio file
     match = re.search(pattern, link)
     code = match.group(1)  # The extracted identifier from the link
     code = unquote(code)  # Decode any URL-encoded characters in the code
 
-    # Validate the presence of 'link' and 'code' to proceed
     if not link or not code:
         return "Invalid request parameters", 400
-    # ####
-    # # Download the audio file using the provided URL and extracted code
-    # audio_file = download_audio(link, code)
+    audio_file = download_audio(link, code)
+    if not audio_file:
+        return "Failed to download audio file", 500
+    
+    # Call functions to generate scene and image.
+    scene = generate_scene(lyrics, code)
+    image_url = generate_image(scene, code)
 
-    # # If downloading fails, return an error response
-    # if not audio_file:
-    #     return "Failed to download audio file", 500
-    # #####
-    # [Placeholder] This section is intended for calling a generative AI model or script to generate an image based on the audio.
-    # Actual image generation logic (e.g., calling a separate script or service) would go here.
-    generate_image(lyrics, code)
-
-    # Construct the path to the potentially generated image and check if it exists
-    generated_image_path = os.path.join('images', f'{code}.jpeg')
-    if os.path.exists(generated_image_path):
-        # If the image exists, construct its URL for access over the web
-        image_url = f"http://{SERVER_URL}/images/{code}.jpeg"
-        # Read additional text associated with the image, if available
-        with open(os.path.join('images', f'{code}.txt'), 'r') as file:
-          text = file.read()
-        # Return the image URL and any associated text as JSON
-        response_data = {'url': image_url, 'text': text}
+    if scene and image_url :
+        if image_url == -1 : 
+            response_data = {'url': -1, 'text':-1}
+            return jsonify(response_data)
+        response_data = {'url': f"http://{SERVER_URL}/{image_url}", 'text': scene}
         return jsonify(response_data)
     else:
-        # If image generation failed, return an error response
         return "Failed to generate image", 500
 
-# Define a function to download an audio file given its URL and a unique code
+# Function to download audio file.
 def download_audio(url, code):
     try:
         # Attempt to download the file from the given URL
@@ -90,39 +79,44 @@ def download_audio(url, code):
         print("Error downloading audio:", e)
         return None
 
-# Placeholder for a generative AI image generation function
-# This would execute an external script or service, using the downloaded audio as input to generate an image.
-def generate_image(lyrics, code):
+# Function to generate scene description.
+def generate_scene(lyrics, code):
+    while True:
+        try:
+            question = "Imagine a scene that suits the following lyrics and describe it briefly in about 5 sentences in Korean."
+            response = model.generate_content([
+                {"text": question},
+                {"text": lyrics}
+            ])
+            print("Response Text:", response.candidates[0].content.parts)
+            text = response.text
+            return text
+        except Exception as e:
+            print("An error occurred:", str(e))
 
-    # Ask a question based on the lyrics
-    question = "What scene does this lyric describe?"
+# Function to generate image.
+def generate_image(scene, code):
+        try:
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=scene,
+                n=1,
+                size="1024x1024"
+            )
+            image_url = response.data[0].url
+            image_data = requests.get(image_url).content
+            with open(os.path.join('images', f'{code}.jpeg'), 'wb') as handler:
+                handler.write(image_data)
+            return os.path.join('images', f'{code}.jpeg')
+        except Exception as e:
+            print("An error occurred:", str(e))
+            return -1
 
-    # Generate content using the model
-    response = model.generate_content([
-        {"text": question},
-        {"text": lyrics}
-    ])
-    
-    print("Response Text:", response.candidates[0].content.parts)
-    # for content in response.candidates[0].content.parts:
-    #     if content.type == 'text':
-    #         print("Response Text:", content.text)
-    #     elif content.type == 'image':
-    #         # Assuming image content is returned as bytes
-    #         image = Image.open(BytesIO(content.bytes))
-    #         image.show()
-    #         # Optionally save the image
-    #         image.save('output_image.png')
-    #         return image, content.text
-    return None, "No image generated."
-
-
-# Define a route to serve image files from the 'images' directory
+# Send the requested image file to the client.
 @app.route('/images/<string:imageName>', methods=['GET'])
 def image(imageName):
-    # Send the requested image file to the client
     return send_file("images/"+imageName)
 
-# Run the Flask application if this script is executed as the main program
+# Run the Flask application if this script is executed as the main program.
 if __name__ == '__main__':
     app.run(debug=True)
