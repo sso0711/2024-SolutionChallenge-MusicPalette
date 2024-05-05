@@ -12,11 +12,24 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# 안드로이드 SDK 다운로드 및 설치
+RUN wget -O sdk-tools-linux.zip https://dl.google.com/android/repository/commandlinetools-linux-7302050_latest.zip
+RUN mkdir /android-sdk
+RUN unzip -d /android-sdk sdk-tools-linux.zip
+RUN rm sdk-tools-linux.zip
+RUN yes | /android-sdk/cmdline-tools/bin/sdkmanager --licenses
+RUN /android-sdk/cmdline-tools/bin/sdkmanager --update
+RUN /android-sdk/cmdline-tools/bin/sdkmanager "build-tools;31.0.0" "platform-tools" "platforms;android-31" "extras;android;m2repository" "extras;google;m2repository"
+
+# ANDROID_HOME 환경 변수 설정
+ENV ANDROID_HOME=/android-sdk
+ENV PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
+
 # Flutter SDK 다운로드
 RUN git clone https://github.com/flutter/flutter.git /flutter
 
 # Flutter SDK 경로를 환경 변수로 추가
-ENV PATH "$PATH:/flutter/bin"
+ENV PATH="$PATH:/flutter/bin"
 
 # 작업 디렉토리 설정
 WORKDIR /app
