@@ -18,17 +18,16 @@ RUN wget -O sdk-tools-linux.zip https://dl.google.com/android/repository/command
 RUN mkdir /android-sdk
 RUN unzip -d /android-sdk sdk-tools-linux.zip
 RUN rm sdk-tools-linux.zip
-RUN yes | /android-sdk/cmdline-tools/bin/sdkmanager --licenses
-RUN /android-sdk/cmdline-tools/bin/sdkmanager --update
-RUN /android-sdk/cmdline-tools/bin/sdkmanager "build-tools;31.0.0" "platform-tools" "platforms;android-31" "extras;android;m2repository" "extras;google;m2repository"
 
 # ANDROID_HOME 환경 변수 설정
 ENV ANDROID_HOME=/android-sdk
-ENV PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
 
-# JAVA_HOME 환경 변수 설정
-ENV JAVA_HOME=/usr/lib/jvm/default-java
-ENV PATH="$PATH:$JAVA_HOME/bin"
+# SDK 라이선스 동의
+RUN yes | $ANDROID_HOME/cmdline-tools/bin/sdkmanager --licenses
+
+# SDK 업데이트 및 필요한 패키지 설치
+RUN $ANDROID_HOME/cmdline-tools/bin/sdkmanager --update
+RUN $ANDROID_HOME/cmdline-tools/bin/sdkmanager "build-tools;31.0.0" "platform-tools" "platforms;android-31" "extras;android;m2repository" "extras;google;m2repository"
 
 # Flutter SDK 다운로드
 RUN git clone https://github.com/flutter/flutter.git /flutter
