@@ -18,7 +18,7 @@ RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
 WORKDIR /app
 
 # 소스 코드 복사
-COPY Front /app
+COPY ./ /app
 
 # 소스 코드 디렉토리로 이동
 WORKDIR /app/Front/music_palette
