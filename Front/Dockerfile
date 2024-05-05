@@ -50,6 +50,10 @@ USER nobody
 # Flutter 앱 빌드를 위한 디렉토리 생성
 RUN mkdir -p /flutter/bin/cache
 
+# 호스트 시스템에서 생성된 Flutter SDK를 Docker 컨테이너로 마운트
+ARG FLUTTER_SDK_PATH=/path/to/host/flutter
+VOLUME $FLUTTER_SDK_PATH:/flutter
+
 # Flutter 앱 빌드
 RUN flutter pub get && flutter build apk --release
 
