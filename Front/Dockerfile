@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libglu1-mesa \
     lib32stdc++6 \
     curl \
+    default-jdk \
     && rm -rf /var/lib/apt/lists/*
 
 # 안드로이드 SDK 다운로드 및 설치
@@ -24,6 +25,10 @@ RUN /android-sdk/cmdline-tools/bin/sdkmanager "build-tools;31.0.0" "platform-too
 # ANDROID_HOME 환경 변수 설정
 ENV ANDROID_HOME=/android-sdk
 ENV PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
+
+# JAVA_HOME 환경 변수 설정
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV PATH="$PATH:$JAVA_HOME/bin"
 
 # Flutter SDK 다운로드
 RUN git clone https://github.com/flutter/flutter.git /flutter
