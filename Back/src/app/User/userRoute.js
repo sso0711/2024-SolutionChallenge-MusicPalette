@@ -88,6 +88,9 @@ module.exports = function(app){
      // provide mp3 files
      app.use('/musics/mp3-file', express.static('./assets/musics'));
 
+     // provide temp mp3 files
+     app.use('/musics-temp/mp3-file', express.static('./assets/uploads/musics'));
+
      // 1. initialize - lrc & coverimages API
      app.post('/initialize-parse', user.postInitializeParse);
 

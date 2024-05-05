@@ -65,8 +65,7 @@ async function getMusicList(db){
             "image_explain": data.image_explain
         });
     }
-    
-    console.log(musicList);
+
     return JSON.stringify(musicList, null, 4);
 }
 
@@ -171,7 +170,8 @@ async function postUploadMp3(db, postUploadMp3Params){
             artist: postUploadMp3Params[2],
             lyrics: postUploadMp3Params[3],
             vibrations: postUploadMp3Params[4],
-            duration: postUploadMp3Params[5]
+            duration: postUploadMp3Params[5],
+            image_explain: postUploadMp3Params[6]
         }
     );
 
@@ -190,9 +190,6 @@ async function isExistMusic(db, title, artist){
         tempAirtst = data[i].artist;
         tempTitle = data[i].title;
 
-        console.log(tempAirtst);
-        console.log(tempTitle);
-
         if(title == tempTitle && artist == tempAirtst){
             return 1;
         }
@@ -208,7 +205,6 @@ async function updateUserLikes(db) {
     snapshot.forEach((childSnapshot) => {
         const userLikesRef = db.ref('Users/' + childSnapshot.key + '/likes');
         const promise = userLikesRef.transaction(current => {
-            console.log(current);
             if (current === null) {
                 return JSON.stringify([false]); // Initialize if not exists
             } else {

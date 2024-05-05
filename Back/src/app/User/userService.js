@@ -213,33 +213,31 @@ async function moveFile(filePath, newPath){
 }
 
 // send request to ML Server and get madeImage / Description
-async function madeImage(title, type){
+async function madeImage(tempFile, title, type){
   try{
     // ML Server endpoint
-    const apiUrl = 'https://2b6a-116-44-106-196.ngrok-free.app';
+    const apiUrl = 'http://34.47.79.157';
 
-    const encodedTitle = encodeURI(title);
-    let imageExplain  = ''
+    const lyricString = await lrcOrTxtToString('./assets/uploads/lyrics/' + title+'.' + type, type);
 
     const requestData = {
-      link: 'http://music-palette.shop/musics/mp3-file/' + encodedTitle +'.mp3',
-      lyrics: lrcOrTxtToString('./assets/uploads/lyrics/' + decodeURI(encodedTitle)+'.' + type, type)
+      link: 'http://music-palette.shop/musics-temp/mp3-file/' + tempFile,
+      lyrics: lyricString
     }
 
-    axios.post(apiUrl, requestData)
-    .then(async response => {
-      // get information from JSON data 
-      const imageLink = response.data.url;
-      imageExplain = response.data.text;
+    const response = await axios.post(apiUrl, requestData);
+    const imageLink = response.data.url;
+    let imageExplain = response.data.text;
 
-      await downloadAndSaveImage(imageLink, './assets/uploads/madeimages/' + decodeURI(encodedTitle)+'.jpg');
-    })
-    .catch(error => {
-      // Process Error
-      console.error('Error:', error.message || error);
-    });
+    console.log(imageLink, imageExplain);
 
+    if (imageExplain == -1 || imageLink == -1) {
+      return -1;
+    }
+
+    await downloadAndSaveImage(imageLink, './assets/uploads/madeimages/' + title +'.jpg');
     return imageExplain;
+
 
   }catch(error){
     return -1;
@@ -459,6 +457,7 @@ exports.postUploadMp3 = async function(tempFile){
     if(isExist == 1){
       removeFile(uploadMp3FilePath);
       removeFile(path.join('./assets/uploads/lyrics', realLyricFile));
+      removeFile(path.join('./assets/uploads/coverimages', realTitle+'.jpg'));
       return errResponse(baseResponse.MP3_ALREADY_EXIST);
     }
   
@@ -479,16 +478,19 @@ exports.postUploadMp3 = async function(tempFile){
     console.log('vibrations and duration 변환 성공');
   
     // made image & description 구하기
-    // const imageExplain = madeImage(realTitle, type);
+    const imageExplain = await madeImage(tempFile, realTitle, type);
+    console.log('imageExplain ', imageExplain);
 
-    // if(imageExplain == -1){
-    //   removeFile(uploadMp3FilePath);
-    //   removeFile('./assets/uploadas/lyrics/'+realLyricFile);
-    //   return errResponse(baseResponse.MP3_MADE_ERROR);
-    // }
-    // console.log(imageExplain);
+    if(imageExplain == -1){
+      removeFile(uploadMp3FilePath);
+      removeFile(path.join('./assets/uploads/lyrics',realLyricFile));
+      removeFile(path.join('./assets/uploads/coverimages', realTitle+'.jpg'));
 
-    // console.log('Image made & description 성공');
+      return errResponse(baseResponse.MP3_MADE_ERROR);
+    }
+    console.log(imageExplain);
+
+    console.log('Image made & description 성공');
   
     // 다 성공했을 경우 uploads에서 모든걸 삭제하고 전체 곡 있는 곳으로 옮기기
     // 1. musics
@@ -504,8 +506,8 @@ exports.postUploadMp3 = async function(tempFile){
     const realCoverimageFilePath = path.join(realCoverimageDirectory, realTitle + '.jpg');
 
     // // 4. madeimage
-    // const realMadeimageDirectory = './assets/madeimages';
-    // const realMadeimageFilePath = path.join(realMadeimageDirectory, realTitle + '.jpg');
+    const realMadeimageDirectory = './assets/madeimages';
+    const realMadeimageFilePath = path.join(realMadeimageDirectory, realTitle + '.jpg');
 
     // move directory - music, lyrics, coverimage, madeimage
     moveFile(uploadMp3FilePath, realMusicFilePath);
@@ -516,12 +518,12 @@ exports.postUploadMp3 = async function(tempFile){
     } else {
       console.log('Coverimage does not exist, so cannot move');
     }
-    // moveFile(path.join('./assets/uploads/madeimages', realTitle+'.jpg'), realMadeimageFilePath);
+    moveFile(path.join('./assets/uploads/madeimages', realTitle+'.jpg'), realMadeimageFilePath);
 
     console.log('move 완료 !!!');
   
     // DB에 저장하기 - image explain 추가
-    const postUploadMp3Params = [realTitle, encodeURI(realTitle), artist, lyrics, vibrations, duration];
+    const postUploadMp3Params = [realTitle, encodeURI(realTitle), artist, lyrics, vibrations, duration, imageExplain];
     await userDao.postUploadMp3(db, postUploadMp3Params);
 
     // User 전체 좋아요 list update하기

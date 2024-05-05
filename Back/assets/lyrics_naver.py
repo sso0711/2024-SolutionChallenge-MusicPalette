@@ -36,7 +36,7 @@ def get_lyrics_naver(artist, title, split_title):
         lyrics_link = soup.select_one(".lyrics_txt")
         if lyrics_link is None:
             # 찾을 수 없다는 뜻. 정식 음원이 x
-            return -1, -1
+            return -1
         lyrics_texts = [element.get_text() for element in lyrics_link]
     
     else:
