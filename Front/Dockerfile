@@ -21,13 +21,13 @@ ENV PATH "$PATH:/flutter/bin"
 WORKDIR /app
 
 # 소스 코드 복사
-COPY ./Front/music_palette /app
+COPY ./music_palette /app
 
 # 소스 코드 디렉토리로 이동
 WORKDIR /app
 
 # Flutter 앱 빌드를 위해 필요한 작업 디렉토리 설정
-WORKDIR /app/Front/music_palette
+WORKDIR /app/music_palette
 
 # Flutter 앱 빌드
 RUN flutter pub get && flutter build apk --release
