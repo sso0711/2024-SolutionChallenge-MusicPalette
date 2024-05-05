@@ -42,12 +42,10 @@ WORKDIR /app
 COPY ./music_palette /app
 
 # 소스 코드 디렉토리로 이동
-WORKDIR /app
-
-# Flutter 앱 빌드를 위해 필요한 작업 디렉토리 설정
 WORKDIR /app/music_palette
 
 # Flutter 앱 빌드
+USER nobody
 RUN flutter pub get && flutter build apk --release
 
 # 실행 명령어
