@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     libglu1-mesa \
     lib32stdc++6 \
-    curl \  # curl 추가
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Flutter SDK 다운로드
