@@ -315,7 +315,95 @@ class _HomeScreenState extends State<HomeScreen>
             )
           ],
         ),
-        const Text("로그인이 필요합니다."),
+        Text(
+          "Enjoy music visually and tactile!",
+          style: TextStyle(
+            color: Theme.of(context).focusColor,
+            fontSize: 25,
+          ),
+        ),
+        const SizedBox(
+          height: 5,
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.done_outline_rounded,
+              size: 17,
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            Expanded(
+              child: Text(
+                "You can feel the vibration to the beat.",
+                style: TextStyle(
+                  color: Theme.of(context).focusColor,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(
+          height: 2,
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.done_outline_rounded,
+              size: 17,
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            Expanded(
+              child: Text(
+                "And you can appreciate the AI image created based on the melody and lyrics of the music.",
+                style: TextStyle(
+                  color: Theme.of(context).focusColor,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(
+          height: 2,
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.done_outline_rounded,
+              size: 17,
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            Expanded(
+              child: Text(
+                "You can enjoy the song you want by uploading it as an mp3 file.",
+                style: TextStyle(
+                  color: Theme.of(context).focusColor,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(
+          height: 30,
+        ),
+        Text(
+          "Log in and enjoy music palette.",
+          style: TextStyle(
+            color: Theme.of(context).focusColor,
+            fontSize: 20,
+          ),
+        ),
         const SizedBox(
           height: 20,
         ),
@@ -374,6 +462,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   ListView makeMusicList(AsyncSnapshot<List<MyMusic>> snapshots) {
+    //print("${snapshots.data!.length}");
+    //print("${user.likeList.length}");
     for (int i = 0; i < snapshots.data!.length; i++) {
       snapshots.data![i].like = user.likeList[i + 1];
     }
@@ -478,15 +568,16 @@ class MusicUpload extends StatefulWidget {
 
 class _MusicUploadState extends State<MusicUpload> {
   bool isupload = false;
+  bool nowupload = false;
   late File file;
   String fileName = "";
 
-  void popUp(bool result) {
+  void popUp(Map<String, dynamic> result) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        if (result) {
+        if (result["code"] == 1000) {
           return AlertDialog(
             title: const Text("파일 업로드 완료!"),
             content: SizedBox(
@@ -508,6 +599,8 @@ class _MusicUploadState extends State<MusicUpload> {
             ],
           );
         } else {
+          String message = result["message"];
+
           return AlertDialog(
             title: const Text("파일 업로드 실패!"),
             content: SizedBox(
@@ -515,7 +608,7 @@ class _MusicUploadState extends State<MusicUpload> {
               child: Column(
                 children: [
                   Text("file : $fileName"),
-                  const Text("파일 변환에 실패했습니다."),
+                  Text(message),
                 ],
               ),
             ),
@@ -562,6 +655,16 @@ class _MusicUploadState extends State<MusicUpload> {
               Text("정식 음원파일이 아닌경우 업로드에 실패할 수 있습니다."),
               Text("정상적으로 업로드된 음원은"),
               Text("확인 메시지 이후 전체노래 목록에서 확인할 수 있습니다."),
+              SizedBox(
+                height: 2,
+              ),
+              Text(
+                "노래 변환 중 현재 페이지를 나가지 마세요",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const SizedBox(
@@ -635,31 +738,41 @@ class _MusicUploadState extends State<MusicUpload> {
             width: MediaQuery.of(context).size.width * 0.9,
             child: !isupload
                 ? const Text("선택한 파일이 없습니다")
-                : Column(
-                    children: [
-                      TextButton.icon(
-                        icon: Icon(
-                          Icons.send,
-                          color: Theme.of(context).focusColor,
-                        ),
-                        label: Text(
-                          "노래 업로드",
-                          style: TextStyle(color: Theme.of(context).focusColor),
-                        ),
-                        onPressed: () async {
-                          // api들어가면 될것같음..
-                          // 근데 노래파일을 어떻게 보내야하는지,,,,,,
-                          bool result = await ApiService.uploadfile(file);
-                          popUp(result);
-                          setState(() {
-                            isupload = false;
-                            if (result) {
-                              _HomeScreenState.update_allmusic();
-                            }
-                          });
-                        },
-                      ),
-                    ],
+                : Container(
+                    child: nowupload
+                        ? const Column(
+                            children: [CircularProgressIndicator()],
+                          )
+                        : TextButton.icon(
+                            icon: Icon(
+                              Icons.send,
+                              color: Theme.of(context).focusColor,
+                            ),
+                            label: Text(
+                              "노래 업로드",
+                              style: TextStyle(
+                                  color: Theme.of(context).focusColor),
+                            ),
+                            onPressed: () async {
+                              // api들어가면 될것같음..
+                              // 근데 노래파일을 어떻게 보내야하는지,,,,,,
+                              setState(() {
+                                nowupload = true;
+                              });
+                              Map<String, dynamic> result =
+                                  await ApiService.uploadfile(file);
+
+                              popUp(result);
+
+                              setState(() {
+                                isupload = false;
+                                nowupload = false;
+                                if (result["code"] == 1000) {
+                                  _HomeScreenState.update_allmusic();
+                                }
+                              });
+                            },
+                          ),
                   ),
           )
         ],
@@ -704,8 +817,13 @@ class Music extends StatelessWidget {
                 height: 60,
                 width: 60,
                 color: Colors.white,
-                child: Image.network(ApiService.getCoverImageString(
-                    encodedtitle: music.encodedtitle)),
+                child: Image.network(
+                  ApiService.getCoverImageString(
+                      encodedtitle: music.encodedtitle),
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset('assets/image/icon.png');
+                  },
+                ),
               ),
             ),
             const SizedBox(
