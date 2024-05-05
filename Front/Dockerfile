@@ -12,11 +12,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Flutter SDK 설치
-RUN git clone https://github.com/flutter/flutter.git
-ENV PATH "$PATH:packages/flutter"
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
+
+# 작업 디렉토리 설정
+WORKDIR /app
 
 # 소스 코드 복사
-COPY music_palette /app
+COPY ./ /app
+
+# 소스 코드 디렉토리로 이동
+WORKDIR /app/music_palette
 
 # Flutter 앱 빌드
 RUN flutter pub get && flutter build apk --release
