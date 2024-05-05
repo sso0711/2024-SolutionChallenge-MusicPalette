@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 # Flutter SDK 설치
 RUN git clone https://github.com/flutter/flutter.git
-ENV PATH "$PATH:/bin"
+ENV PATH "$PATH:/bin/flutter"
 
 # 작업 디렉토리 설정
 WORKDIR /app
