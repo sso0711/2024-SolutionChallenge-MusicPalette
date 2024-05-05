@@ -11,9 +11,18 @@ RUN apt-get update && apt-get install -y \
     lib32stdc++6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Flutter SDK 설치
-RUN git clone https://github.com/flutter/flutter.git
-ENV PATH "$PATH:/bin"
+# 환경 변수 설정: Flutter SDK 경로 및 버전
+ENV FLUTTER_SDK="/usr/local/flutter"
+ENV FLUTTER_VERSION="stable"
+
+#clone flutter
+RUN git clone https://github.com/flutter/flutter.git $FLUTTER_SDK
+
+# change dir to current flutter folder and make a checkout to the specific version
+RUN cd $FLUTTER_SDK && git fetch && git checkout $FLUTTER_VERSION
+
+# setup the flutter path as an enviromental variable
+ENV PATH="$FLUTTER_SDK/bin:$FLUTTER_SDK/bin/cache/dart-sdk/bin:${PATH}"
 
 # 작업 디렉토리 설정
 WORKDIR /app
