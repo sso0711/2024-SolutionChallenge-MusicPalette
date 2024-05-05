@@ -46,6 +46,11 @@ WORKDIR /app/music_palette
 
 # Flutter 앱 빌드
 USER nobody
+
+# Flutter 앱 빌드를 위한 디렉토리 생성
+RUN mkdir -p /flutter/bin/cache
+
+# Flutter 앱 빌드
 RUN flutter pub get && flutter build apk --release
 
 # 실행 명령어
