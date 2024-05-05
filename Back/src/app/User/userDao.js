@@ -66,6 +66,7 @@ async function getMusicList(db){
         });
     }
     
+    console.log(musicList);
     return JSON.stringify(musicList, null, 4);
 }
 
@@ -159,6 +160,97 @@ async function postDuration(db, musicId, duration){
     );
 }
 
+async function postUploadMp3(db, postUploadMp3Params){
+    const musicId = await increaseMusicId(db) + '';
+    const ref = db.ref('Musics/' + musicId);
+    
+    await ref.set(
+        {
+            title: postUploadMp3Params[0],
+            encoded_title: postUploadMp3Params[1],
+            artist: postUploadMp3Params[2],
+            lyrics: postUploadMp3Params[3],
+            vibrations: postUploadMp3Params[4],
+            duration: postUploadMp3Params[5]
+        }
+    );
+
+}
+
+// 존재하는 노래인지 체크
+async function isExistMusic(db, title, artist){
+    const musicNum = (await db.ref('last_music_id').once('value')).val();
+    const ref = db.ref('Musics');
+    const data = (await ref.once('value')).val();
+
+    let tempAirtst;
+    let tempTitle;
+
+    for(let i = 1; i <= musicNum; i++){
+        tempAirtst = data[i].artist;
+        tempTitle = data[i].title;
+
+        console.log(tempAirtst);
+        console.log(tempTitle);
+
+        if(title == tempTitle && artist == tempAirtst){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// 곡 추가 되었을 때, User의 전체 likes 업데이트
+// lock 필요. 누가 userLikes 전체 업데이트 중에 user 좋아요 list 읽어가기 하면 안된다
+async function updateUserLikes(db) {
+    const snapshot = await db.ref('Users').once('value');
+    const updates = [];
+    snapshot.forEach((childSnapshot) => {
+        const userLikesRef = db.ref('Users/' + childSnapshot.key + '/likes');
+        const promise = userLikesRef.transaction(current => {
+            console.log(current);
+            if (current === null) {
+                return JSON.stringify([false]); // Initialize if not exists
+            } else {
+                const likes = JSON.parse(current);
+                likes.push(false);
+                return JSON.stringify(likes);
+            }
+        });
+        updates.push(promise);
+    });
+
+    await Promise.all(updates).then(() => {
+        console.log("All updates completed.");
+    }).catch(error => {
+        console.error("Error updating likes for users:", error);
+    });
+}
+
+// for test
+async function test(db){
+    const musicIdRef = db.ref('last_music_id');
+    musicIdRef.set(20)
+  .then(() => {
+    console.log('last_music_id updated to 20 successfully!');
+  })
+  .catch((error) => {
+    console.error('Failed to update last_music_id:', error);
+  });
+}
+
+// for image explain test
+async function testtest(db, musicId){
+    const ref = db.ref('Musics/'+ musicId);
+
+
+    await ref.update(
+        {
+            image_explain: 'test',
+        }
+    );
+}
+
 module.exports ={
     postInitializeMade,
     postInitializeStore,
@@ -169,5 +261,10 @@ module.exports ={
     checkDBMusicExist,
     deleteUserLike,
     postVibration,
-    postDuration
+    postDuration,
+    postUploadMp3,
+    isExistMusic,
+    updateUserLikes,
+    test,
+    testtest
 };

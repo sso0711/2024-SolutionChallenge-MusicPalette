@@ -192,3 +192,19 @@ async function validateFirebaseIdToken(idToken){
   return res.send(response);
 
  }
+
+
+ /**
+  * Test
+  */
+ exports.test = async function(req, res){
+  const response = await userService.test();
+  return res.send(response);
+ }
+
+ exports.testtest = async function(req, res){
+  const musicId = req.params.music_id;
+  console.log(musicId);
+  const response = await userService.testtest(musicId);
+  return res.send(response);
+ }
