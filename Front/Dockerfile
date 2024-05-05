@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     libglu1-mesa \
     lib32stdc++6 \
+    curl \  # curl 추가
     && rm -rf /var/lib/apt/lists/*
 
 # Flutter SDK 다운로드
@@ -33,5 +34,4 @@ WORKDIR /app/music_palette
 RUN flutter pub get && flutter build apk --release
 
 # 실행 명령어
-CMD ["flutter", "run", "--release"]
 CMD ["flutter", "run", "--release"]
