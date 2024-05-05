@@ -188,10 +188,11 @@ class ApiService {
   }
 
   //10. mp3파일 업로드
-  static Future<bool> uploadfile(File file) async {
+  static Future<Map<String, dynamic>> uploadfile(File file) async {
     dynamic sendData = file.path;
     var formData =
         FormData.fromMap({'mp3file': await MultipartFile.fromFile(sendData)});
+    Map<String, dynamic> defaultresult = {"code": 0, "message": "mp3파일 업로드 실패"};
 
     var dio = Dio();
     try {
@@ -203,22 +204,36 @@ class ApiService {
         '$baseUrl/musics/upload-mp3',
         data: formData,
       );
-
+      //print("-------api code $response");
       if (response.statusCode == 200) {
-        //print("test del");
-        final Map<String, dynamic> likeId = jsonDecode(response.data);
+        //print("------------------- $response.data");
+        //final Map<String, dynamic> likeId = jsonDecode(response.data);
+        //String likeId = jsonDecode(response.data);
+        //print("")
+        int resultcode = response.data["code"];
+        String resultmessage = response.data["message"];
 
-        bool result = json.decode(likeId["isSuccess"]).cast<bool>();
+        Map<String, dynamic> result = {
+          "code": resultcode,
+          "message": resultmessage
+        };
+        //result["code"] = response.data["code"];
+        //int result = 1;
+        //print("---------------------");
+        //print(test.runtimeType);
+        //Map<dynamic, dynamic> likeId = response.data;
 
-        //print("찜삭제");
+        //int result = json.decode(likeId["code"]).cast<int>();
+
+        //print("-----------------------------api $result");
         //print(musicInstances);
 
         return result;
       }
-      return false;
+      return defaultresult;
     } catch (e) {
       print(e);
-      return false;
+      return defaultresult;
     }
   }
 

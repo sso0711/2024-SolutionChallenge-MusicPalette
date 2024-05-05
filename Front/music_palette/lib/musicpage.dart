@@ -80,12 +80,18 @@ class _MusicPageState extends State<MusicPage> {
   Future<void> seekMusic(Duration newPosition) async {
     await player.seek(newPosition);
 
+    //print("-------------test");
+
     bool flag = true;
 
     int i = 0;
     int j = 0;
     //print("new : ${newPosition.inMilliseconds}");
     // for lrc
+    if (lyric[3][0].inMilliseconds == const Duration().inMilliseconds) {
+    } else {
+      flag = false;
+    }
     while (flag) {
       //print(i);
       if (i >= lyric.length - 1) {
@@ -101,7 +107,7 @@ class _MusicPageState extends State<MusicPage> {
       }
     }
     // for vive
-    while (flag) {
+    while (true) {
       //print(i);
       if (j >= vive.length) {
         break;
@@ -118,14 +124,17 @@ class _MusicPageState extends State<MusicPage> {
 
     //print("set - $i");
     setState(() {
-      now = i;
-      now_lrc = lyric[now][1];
-      if (now >= lyric.length - 1) {
-        next_lrc = " ";
+      if (lyric[3][0].inMilliseconds == const Duration().inMilliseconds) {
       } else {
-        next_lrc = lyric[now + 1][1];
+        now = i;
+        now_lrc = lyric[now][1];
+        if (now >= lyric.length - 1) {
+          next_lrc = " ";
+        } else {
+          next_lrc = lyric[now + 1][1];
+        }
+        nowvive = j;
       }
-      nowvive = j;
     });
   }
 
@@ -137,26 +146,39 @@ class _MusicPageState extends State<MusicPage> {
   }
 
   void startMusic() {
-    now_lrc = lyric[now][1];
-    if (now >= lyric.length - 1) {
-      next_lrc = " ";
+    //print(lyric[3][0].inMilliseconds);
+    //print(const Duration().inMilliseconds);
+    if (lyric[3][0].inMilliseconds == const Duration().inMilliseconds) {
+      now_lrc = "전체가사 보기";
+      next_lrc = "";
     } else {
-      next_lrc = lyric[now + 1][1];
+      now_lrc = lyric[now][1];
+      if (now >= lyric.length - 1) {
+        next_lrc = " ";
+      } else {
+        next_lrc = lyric[now + 1][1];
+      }
     }
 
     player.onPositionChanged.listen((Duration p) {
+      //print("-------------test");
       setState(() {
         now_position = p;
         position.add(p);
-        if (!(now >= lyric.length - 1)) {
-          if (lyric[now + 1][0].inMilliseconds < p.inMilliseconds) {
-            now = now + 1;
-            //now_lrc = lyric[now][1];
-            if (now >= (lyric.length - 1)) {
-              //print("test");
-              //next_lrc = "";
-            } else {
-              //next_lrc = lyric[now + 1][1];
+        if (lyric[3][0].inMilliseconds == const Duration().inMilliseconds) {
+        } else {
+          if (!(now >= lyric.length - 1)) {
+            //print("---------test");
+            if (lyric[now + 1][0].inMilliseconds < p.inMilliseconds) {
+              //print("-----test");
+              now = now + 1;
+              //now_lrc = lyric[now][1];
+              if (now >= (lyric.length - 1)) {
+                //print("test");
+                //next_lrc = "";
+              } else {
+                //next_lrc = lyric[now + 1][1];
+              }
             }
           }
         }
