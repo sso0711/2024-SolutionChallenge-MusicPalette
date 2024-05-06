@@ -142,7 +142,7 @@ We used drawer menu before. We recognized the inconvenience to touch the drawer 
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/aeb7e5eb-5483-4643-81bc-b9e9ab7b0a29" width="270" height="580">
 </div>
 
-The upload process progresses from the left picture to the right picture. First, user finds and uploads the desired MP3 file, then click the send button, and a loading icon appears. Afterward, when a popup indicating 'Music conversion successful'('노래가 변환되었습니다' in Korean) appears, user can verify that user's uploaded song has been added under 'All music' ('전체 노래' in Korean). As shown in the far right picture, user can now enjoy the music with vibrations, the created image, image description, and lyrics.
+The upload process progresses from the left picture to the right picture. First, user finds and uploads the desired MP3 file, then click the send button, and a loading icon appears. Afterward, when a popup indicating 'Music conversion successful'('노래가 변환되었습니다' in Korean) appears, user can verify that user's uploaded song has been added under 'All music' ('전체 노래' in Korean). As shown in the far right picture, user can now enjoy the music with vibrations, the created image, image description, and real-time lyrics or lyrics.
 
 
 
@@ -162,6 +162,9 @@ The left one shows the old version, and the right one shows the updated UI. User
 <div align="center">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a0f9b40c-15bb-4829-9f67-807a9f733235" width="250" height="580">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/378a9d12-203b-4dd4-ba0d-6f9dd06d1f79" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1b212bb0-4981-493e-a1fe-d026dfe61e19" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/30cddc8a-1b5c-4135-a695-95b970f3d35a" width="250" height="580">
+
 </div>
 
 If user chooses and plays music, user can feel vibrations synced with music beat. Also, user can see image created based on lyrics and melody. If user touches the image, user can see image explanations which help user gain deeper insights into the generated images, ultimately aiding in a better understanding of the music. User can download generated image by clicking 'Download Generated Image' ('생성된 이미지 다운로드 받기' in Korean).
@@ -170,6 +173,7 @@ If user chooses and plays music, user can feel vibrations synced with music beat
 ---
 <div align="center">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/0bfae1ca-5966-4e1d-b93f-2d0a82d95adb" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/80a420a0-61b3-486d-b24a-1f2896541cf3" width="250" height="580">
 </div>
 
 User can see real-time lyrics, the lyrics sync with the audio in real time. The currently playing lyric is displayed prominently in large, bold text. We used crawling to get lrc files, which contain the lyrics and timing information for the songs associated with the file.
@@ -179,6 +183,8 @@ User can see real-time lyrics, the lyrics sync with the audio in real time. The 
 ---
 <div align="center">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/56e1594f-32e3-4b63-bc13-873362f9cf31" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/5bbed4df-dc42-42ea-96f6-6ae7005fedd9" width="250" height="580">
+
 </div>
 
 User can easily add their favorite songs by clicking heart and view them in 'My Favorites' ('내가 찜한 노래' in Korean).
@@ -187,6 +193,8 @@ User can easily add their favorite songs by clicking heart and view them in 'My 
 ---
 <div align="center">
 <img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/e1ba4548-7ce3-4053-902b-7cb257c3d88b" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/f22a0882-f921-448a-a68d-9cd7e379f10b" width="250" height="580">
+
 </div>
 
 User can see all music by clicking 'All Music' ('전체 노래' in Korean).
