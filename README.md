@@ -160,10 +160,10 @@ The left one shows the old version, and the right one shows the updated UI. User
 ### Vibrations and Image created based on lyrics and melody
 ---
 <div align="center">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a0f9b40c-15bb-4829-9f67-807a9f733235" width="250" height="580">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/378a9d12-203b-4dd4-ba0d-6f9dd06d1f79" width="250" height="580">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1b212bb0-4981-493e-a1fe-d026dfe61e19" width="250" height="580">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/30cddc8a-1b5c-4135-a695-95b970f3d35a" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a0f9b40c-15bb-4829-9f67-807a9f733235" width="200" height="460">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/378a9d12-203b-4dd4-ba0d-6f9dd06d1f79" width="200" height="460">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1b212bb0-4981-493e-a1fe-d026dfe61e19" width="200" height="460">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/30cddc8a-1b5c-4135-a695-95b970f3d35a" width="200" height="460">
 
 </div>
 
