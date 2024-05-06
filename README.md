@@ -10,8 +10,11 @@ Music Palette - GDSC Solution Challenge 2024
 - [Target SDGs](#target-sdgs)
 - [Technical Components](#technical-components)
 - [Google Form Survey](#google-form-survey)
+- [( + Added ) Introduce Changes for Resubmission](#introduce-changes-for-resubmission)
 - [App Demo](#app-demo)
-    - [Main Page](#main-page)
+    - [( + Added ) Updated UI Preview](#updated-ui-preview)
+    - [( + Added ) Real-time Music Uploads](#real-time-music-uploads)
+    - [( + Changed ) Main Page](#main-page)
     - [Vibrations and Image created based on lyrics and melody](#vibrations-and-image-created-based-on-lyrics-and-melody)
     - [Real-time lyrics](#real-time-lyrics)
     - [My Favorites](#my-favorites)
@@ -48,7 +51,7 @@ Music Palette offers a multisensory experience by providing music not only audib
 Before initiating the development of Music Palette, we conducted a Google Form survey targeting individuals with hearing impairments. Based on the information gathered from the survey and various online sources related to individuals with hearing impairments, we identified the needs of the deaf community. With this understanding, we finalized and developed the core features of the Music Palette app.
 ### 1. How do you typically experience music?
 ---
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/17047cbe-390a-4a0a-acfd-ef7e5eeba4a6" width="800" height="350">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/17047cbe-390a-4a0a-acfd-ef7e5eeba4a6" width="700" height="300">
 
 <p>$\bf{\color{#0000FF}Blue}$ : I have residual hearing, allowing me to listen to music.</p>
 <p>$\bf{\color{#FF0000}Red}$ : I use hearing aids, in-ear devices, etc., to enjoy music.</p>
@@ -57,7 +60,7 @@ Before initiating the development of Music Palette, we conducted a Google Form s
 
 ### 1-1. If you selected "I don't really engage in or enjoy music" in the previous question, what is the reason for that?
 ---
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/ce049884-1141-4722-8c48-bd0b8e0716b8" width="800" height="350">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/ce049884-1141-4722-8c48-bd0b8e0716b8" width="700" height="300">
 
 <p>$\bf{\color{#0000FF}Blue}$ : I desire to enjoy music, but the means to appreciate it are not widespread.</p>
 <p>$\bf{\color{#FF0000}Red}$ : I want to listen to music, but I find that the current methods do not convey music vividly, or I don't feel a strong interest in them.</p>
@@ -67,7 +70,7 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 
 ### 2. Have you ever experienced enjoying music through vibrations?
 ---
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1bfcfee1-1fe3-4e33-9fd8-0af39ea6b09e" width="800" height="350">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1bfcfee1-1fe3-4e33-9fd8-0af39ea6b09e" width="700" height="300">
 
 <p>$\bf{\color{#0000FF}Blue}$ : Yes</p>
 <p>$\bf{\color{#FF0000}Red}$ : No</p>
@@ -76,7 +79,7 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 
 ### 3. Could you gather sufficient information about the music from the existing album cover? If not, what was the reason?
 ---
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/dbc48c3e-f2d3-449f-9fd8-3dc348168e1e" width="800" height="350">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/dbc48c3e-f2d3-449f-9fd8-3dc348168e1e" width="700" height="300">
 
 <p>$\bf{\color{#0000FF}Blue}$ : because the album cover was too abstract</p>
 <p>$\bf{\color{#FF0000}Red}$ : because it featured an unrelated picture of the artist</p>
@@ -86,7 +89,7 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 
 ### 4. If you were to represent music through a picture, what information would you prefer to be most prominently conveyed? (Multiple choices allowed)
 ---
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/5c047bad-535c-46b5-a14a-10af53ab67ca" width="800" height="350">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/5c047bad-535c-46b5-a14a-10af53ab67ca" width="700" height="300">
 
 - The atmosphere of the music
 - The story of the lyrics
@@ -94,7 +97,7 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 
 ### 5. Please choose the features you consider essential from the following options. (Multiple selections allowed)
 ---
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/6c0fe4a9-2f43-4d85-b444-69d87b63703b" width="800" height="350">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/6c0fe4a9-2f43-4d85-b444-69d87b63703b" width="700" height="300">
 
 - Friend adding & music sharing feature
 - Image download generated based on the melody and lyrics of the music
@@ -106,21 +109,59 @@ Many individuals with hearing impairment voted for Blue despite not choosing "I 
 
 
 
+## Introduce Changes for Resubmission
+
+1. **Support real-time music uploads :** Users can upload their desired music and enjoy it within approximately 30 seconds. Users can enjoy the music with lyrics, image based on the lyrics and melody, and image description.
+
+2. **More improved vibration generation :** First, we switched to a new library for faster and more accurate beat tracking. Second, we expanded the beat strength divisions, standardizing the range across all sections and adding a fourth strength level to introduce greater dynamics. Lastly, we adjusted the vibration durations. Previously set 0.5 s for all songs, we now dynamically calculate and set vibration durations based on the average beat interval of each song to better match the beat speed.
+
+3. **More user-friendly UI :** We used drawer menu before. We recognized the inconvenience to touch the drawer menu and then touch again to select the desired option. Thus, we switched it to bottom navigation. Also, we've enhanced the UI's overall cleanliness with a neat background color, appropriately sized text, and smooth screen transitions.
+
+Changes will be shown in [App Demo](#app-demo) part. 
+
+
+
+
 
 ## App Demo
+### Updated UI Preview
+---
+
+<div align="center">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/97a77104-78d6-4605-8550-8413df353f2f" width="270" height="580">
+</div>
+
+We used drawer menu before. We recognized the inconvenience to touch the drawer menu and then touch again to select the desired option. Thus, we switched it to bottom navigation. Also, we've enhanced the UI's overall cleanliness with a neat background color, appropriately sized text, and smooth screen transitions.
+
+
+### Real-time Music Uploads
+---
+<div align="center">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a8dfed6f-9337-4143-9e6a-40d9924b6bc3" width="270" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/1fac8755-54a6-4e98-b08a-d4dfbb03580e" width="270" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/aeb7e5eb-5483-4643-81bc-b9e9ab7b0a29" width="270" height="580">
+</div>
+
+The upload process progresses from the left picture to the right picture. First, user finds and uploads the desired MP3 file, then click the send button, and a loading icon appears. Afterward, when a popup indicating 'Music conversion successful'('노래가 변환되었습니다' in Korean) appears, user can verify that user's uploaded song has been added under 'All music' ('전체 노래' in Korean). As shown in the far right picture, user can now enjoy the music with vibrations, the created image, image description, and lyrics.
+
+
+
 ### Main Page
 ---
 <div align="center">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/569812e7-ca52-4069-9237-41af90ecc87e" width="350" height="650">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/569812e7-ca52-4069-9237-41af90ecc87e" width="250" height=580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/34d43d01-5988-4eb7-904e-216c2f396877" width="250" height=580">
 </div>
 
-When user first install Music Palette and log in, user can see 10 recommended songs.
+~~When user first install Music Palette and log in, user can see 10 recommended songs.~~
+The left one shows the old version, and the right one shows the updated UI. User can see 10 recommended songs and can refresh the recommended songs. User can also search for songs by clicking on the magnifying glass icon.
+
 
 ### Vibrations and Image created based on lyrics and melody
 ---
 <div align="center">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a0f9b40c-15bb-4829-9f67-807a9f733235" width="350" height="650">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/378a9d12-203b-4dd4-ba0d-6f9dd06d1f79" width="350" height="650">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/a0f9b40c-15bb-4829-9f67-807a9f733235" width="250" height="580">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/378a9d12-203b-4dd4-ba0d-6f9dd06d1f79" width="250" height="580">
 </div>
 
 If user chooses and plays music, user can feel vibrations synced with music beat. Also, user can see image created based on lyrics and melody. If user touches the image, user can see image explanations which help user gain deeper insights into the generated images, ultimately aiding in a better understanding of the music. User can download generated image by clicking 'Download Generated Image' ('생성된 이미지 다운로드 받기' in Korean).
@@ -128,7 +169,7 @@ If user chooses and plays music, user can feel vibrations synced with music beat
 ### Real-time lyrics
 ---
 <div align="center">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/0bfae1ca-5966-4e1d-b93f-2d0a82d95adb" width="350" height="650">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/0bfae1ca-5966-4e1d-b93f-2d0a82d95adb" width="250" height="580">
 </div>
 
 User can see real-time lyrics, the lyrics sync with the audio in real time. The currently playing lyric is displayed prominently in large, bold text. We used crawling to get lrc files, which contain the lyrics and timing information for the songs associated with the file.
@@ -137,7 +178,7 @@ User can see real-time lyrics, the lyrics sync with the audio in real time. The 
 ### My Favorites
 ---
 <div align="center">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/56e1594f-32e3-4b63-bc13-873362f9cf31" width="350" height="650">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/56e1594f-32e3-4b63-bc13-873362f9cf31" width="250" height="580">
 </div>
 
 User can easily add their favorite songs by clicking heart and view them in 'My Favorites' ('내가 찜한 노래' in Korean).
@@ -145,7 +186,7 @@ User can easily add their favorite songs by clicking heart and view them in 'My 
 ### View All Songs
 ---
 <div align="center">
-<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/e1ba4548-7ce3-4053-902b-7cb257c3d88b" width="350" height="650">
+<img src ="https://github.com/sso0711/2024-SolutionChallenge-MusicPalette/assets/102257328/e1ba4548-7ce3-4053-902b-7cb257c3d88b" width="250" height="580">
 </div>
 
 User can see all music by clicking 'All Music' ('전체 노래' in Korean).
